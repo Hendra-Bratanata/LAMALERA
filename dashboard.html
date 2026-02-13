@@ -1796,14 +1796,14 @@
             document.getElementById('retailNetStatus').textContent = s.retail_net >= 0 ? 'AKUMULASI/BELI' : 'DISTRIBUSI/JUAL';
 
             const whaleOwnEl = document.getElementById('whaleOwnership');
-            whaleOwnEl.textContent = `${(s.whale_net >= 0 ? '+' : '')}Rp ${Math.abs(s.whale_net).toFixed(1)} M`;
+            whaleOwnEl.textContent = `${(s.whale_net >= 0 ? '+' : '')}Rp ${Math.abs(s.whale_net).toFixed(2)} M`;
             whaleOwnEl.className = 'value ' + (s.whale_net >= 0 ? 'positive' : 'negative');
-            document.getElementById('whaleOwnershipLot').textContent = `${(s.whale_net >= 0 ? '+' : '')}Rp ${Math.abs(s.whale_net).toFixed(1)} Miliar`;
+            document.getElementById('whaleOwnershipLot').textContent = `${(s.whale_net >= 0 ? '+' : '')}Rp ${Math.abs(s.whale_net).toFixed(2)} Miliar`;
 
             const retailOwnEl = document.getElementById('retailOwnership');
-            retailOwnEl.textContent = `${(s.retail_net >= 0 ? '+' : '')}Rp ${Math.abs(s.retail_net).toFixed(1)} M`;
+            retailOwnEl.textContent = `${(s.retail_net >= 0 ? '+' : '')}Rp ${Math.abs(s.retail_net).toFixed(2)} M`;
             retailOwnEl.className = 'value ' + (s.retail_net >= 0 ? 'positive' : 'negative');
-            document.getElementById('retailOwnershipLot').textContent = `${(s.retail_net >= 0 ? '+' : '')}Rp ${Math.abs(s.retail_net).toFixed(1)} Miliar`;
+            document.getElementById('retailOwnershipLot').textContent = `${(s.retail_net >= 0 ? '+' : '')}Rp ${Math.abs(s.retail_net).toFixed(2)} Miliar`;
 
             // Harga Terakhir Shark Card
             const lastWhaleBuyPrice = currentStock.volatilityTrend?.lastWhaleBuyPrice || 0;
@@ -2146,7 +2146,7 @@
                             <div class="stock-rec-info-item">
                                 <div class="stock-rec-info-label">Whale NET</div>
                                 <div class="stock-rec-info-value ${item.summary.whale_net >= 0 ? 'positive' : 'negative'}">
-                                    ${item.summary.whale_net >= 0 ? '+' : ''}${item.summary.whale_net.toFixed(1)} M
+                                    ${item.summary.whale_net >= 0 ? '+' : ''}${item.summary.whale_net.toFixed(2)} M
                                 </div>
                             </div>
                             <div class="stock-rec-info-item">
@@ -2618,7 +2618,7 @@
                             display: true,
                             position: 'right',
                             grid: { drawOnChartArea: false },
-                            ticks: { color: '#27ae60', callback: v => (v >= 0 ? '+' : '') + v.toFixed(1) + ' M' },
+                            ticks: { color: '#27ae60', callback: v => (v >= 0 ? '+' : '') + v.toFixed(2) + ' M' },
                             title: { display: true, text: 'Cumulative Net Flow', color: '#27ae60' }
                         }
                     },
