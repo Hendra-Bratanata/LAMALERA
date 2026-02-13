@@ -377,6 +377,82 @@
         .trapped-whale-card .status-description strong {
             color: #e74c3c;
         }
+        .trapped-alert-card {
+            background: rgba(231, 76, 60, 0.08);
+            border: 1px solid rgba(231, 76, 60, 0.25);
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .trapped-alert-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(231, 76, 60, 0.5);
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.2);
+        }
+        .trapped-alert-card.severe {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.08));
+            border-color: rgba(231, 76, 60, 0.4);
+        }
+        .trapped-alert-card.mild {
+            background: linear-gradient(135deg, rgba(243, 156, 18, 0.12), rgba(230, 126, 34, 0.06));
+            border-color: rgba(243, 156, 18, 0.35);
+        }
+        .trapped-alert-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .trapped-alert-card .stock-code {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .trapped-alert-card .stock-code.mild {
+            color: #f39c12;
+        }
+        .trapped-alert-card .trap-badge {
+            background: rgba(231, 76, 60, 0.25);
+            color: #e74c3c;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .trapped-alert-card .trap-badge.mild {
+            background: rgba(243, 156, 18, 0.25);
+            color: #f39c12;
+        }
+        .trapped-alert-card .card-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .trapped-alert-card .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .trapped-alert-card .info-label {
+            font-size: 0.75rem;
+            color: #888;
+        }
+        .trapped-alert-card .info-value {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #e74c3c;
+        }
+        .trapped-alert-card .info-value.mild {
+            color: #f39c12;
+        }
+        .trapped-alert-card .info-arrow {
+            color: #27ae60;
+        }
         .chart-section {
             margin-bottom: 30px;
         }
@@ -952,6 +1028,12 @@
             .trapped-whale-card .status-label { font-size: 0.65rem; }
             .trapped-whale-card .status-value { font-size: 0.9rem; }
             .trapped-whale-card .status-description { font-size: 0.75rem; padding: 10px; }
+            #trappedWhaleList { grid-template-columns: 1fr; gap: 10px; }
+            .trapped-alert-card { padding: 12px; }
+            .trapped-alert-card .stock-code { font-size: 1.2rem; }
+            .trapped-alert-card .card-body { grid-template-columns: 1fr 1fr; gap: 6px; }
+            .trapped-alert-card .info-label { font-size: 0.7rem; }
+            .trapped-alert-card .info-value { font-size: 0.8rem; }
         }
 
         /* Small Devices (landscape phones, 480px - 640px) */
@@ -1107,6 +1189,22 @@
         </div>
         <!-- Error Message -->
         <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <!-- Trapped Whale Alert Section -->
+        <div id="trappedWhaleAlertSection" style="display: none; margin-bottom: 30px;">
+            <div style="background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.05)); border: 2px solid rgba(231, 76, 60, 0.3); border-radius: 12px; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h2 style="color: #e74c3c; font-size: 1.1rem; margin: 0;">⚠️ WHALE TERJEBAK - PERLU PERHATIAN</h2>
+                    <span id="trappedCount" class="badge" style="background: rgba(231, 76, 60, 0.3); color: #e74c3c; font-size: 0.8rem;">0 saham</span>
+                </div>
+                <div id="trappedWhaleList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
+                    <!-- Trapped whale cards will be injected here -->
+                </div>
+                <p style="margin-top: 15px; font-size: 0.8rem; color: #888; text-align: center;">
+                    💡 Klik card untuk melihat detail saham. Whale terjebak = harga jauh di bawah rata-rata beli whale.
+                </p>
+            </div>
+        </div>
 
         <!-- Stock Recommendations -->
         <div id="recommendationsSection" style="display: none;">
@@ -1848,6 +1946,69 @@
 
         // ===== STOCK SELECT & RECOMMENDATIONS =====
 
+        function renderTrappedWhaleList() {
+            const container = document.getElementById('trappedWhaleList');
+            const section = document.getElementById('trappedWhaleAlertSection');
+            const countBadge = document.getElementById('trappedCount');
+
+            // Get stocks with trapped whale
+            const trappedStocks = Object.entries(allData.stocks)
+                .filter(([code, stock]) => stock.priceRecommendation?.isWhaleTrapped)
+                .map(([code, stock]) => {
+                    const pr = stock.priceRecommendation;
+                    const discount = ((pr.avgWhaleBuy - pr.lastPrice) / pr.avgWhaleBuy * 100).toFixed(0);
+                    return {
+                        code: code,
+                        trapLevel: pr.whaleTrapLevel,
+                        avgBuy: pr.avgWhaleBuy,
+                        lastPrice: pr.lastPrice,
+                        discount: discount,
+                        rec: stock.recommendation.recommendation
+                    };
+                })
+                .sort((a, b) => parseFloat(b.discount) - parseFloat(a.discount));
+
+            if (trappedStocks.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            countBadge.textContent = `${trappedStocks.length} saham`;
+
+            container.innerHTML = trappedStocks.map(stock => {
+                const isSevere = stock.trapLevel === 'severe';
+                const severityClass = isSevere ? 'severe' : 'mild';
+
+                return `
+                    <div class="trapped-alert-card ${severityClass}" onclick="selectStockFromRec('${stock.code}')">
+                        <div class="card-header">
+                            <span class="stock-code ${severityClass}">${stock.code}</span>
+                            <span class="trap-badge ${severityClass}">${stock.trapLevel}</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-item">
+                                <span class="info-label">Avg Beli</span>
+                                <span class="info-value ${severityClass}">Rp ${stock.avgBuy}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Harga Last</span>
+                                <span class="info-value ${severityClass}">Rp ${stock.lastPrice}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Diskon</span>
+                                <span class="info-arrow">↓ ${stock.discount}%</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Rekomendasi</span>
+                                <span class="info-value ${severityClass}">${stock.rec}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         function renderRecommendations() {
             const container = document.getElementById('recommendationsList');
             const section = document.getElementById('recommendationsSection');
@@ -1925,6 +2086,9 @@
                 select.appendChild(option);
             });
             document.getElementById('stockSelectorDiv').style.display = 'flex';
+
+            // Render trapped whale list
+            renderTrappedWhaleList();
 
             // Render recommendation cards
             renderRecommendations();
