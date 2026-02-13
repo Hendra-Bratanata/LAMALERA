@@ -120,25 +120,25 @@ def calculate_signals_and_recommendation(summary, daily):
     retail_bearish_reason = ''
 
     # Signal 1: Shark accumulation/distribution
-    whale_net = s.get('shark_net', 0)
+    whale_net = s.get('whale_net', 0)
     if whale_net > 5:
         shark_signal = 'bullish'
         score += 2
-        signals.append('Shark sedang akumulasi kuat')
+        signals.append('Whale sedang akumulasi kuat')
     elif whale_net > 1:
         shark_signal = 'bullish'
         score += 1
-        signals.append('Shark sedang akumulasi moderat')
+        signals.append('Whale sedang akumulasi moderat')
     elif whale_net < -5:
         shark_signal = 'bearish'
         score -= 2
-        signals.append('Shark sedang distribusi kuat')
+        signals.append('Whale sedang distribusi kuat')
     elif whale_net < -1:
         shark_signal = 'bearish'
         score -= 1
-        signals.append('Shark sedang distribusi moderat')
+        signals.append('Whale sedang distribusi moderat')
     else:
-        signals.append('Shark netral/sideways')
+        signals.append('Whale netral/sideways')
 
     # Signal 2: Retail behavior (contrarian indicator)
     fishermen_net = s.get('retail_net', 0)
@@ -172,8 +172,8 @@ def calculate_signals_and_recommendation(summary, daily):
     else:
         recent_5_days = daily
 
-    avg_recent_buy = sum(d.get('shark_buyavg', 0) for d in recent_5_days) / len(recent_5_days) if recent_5_days else 0
-    overall_avg_buy = s.get('shark_buyavg', 0)
+    avg_recent_buy = sum(d.get('whale_buyavg', 0) for d in recent_5_days) / len(recent_5_days) if recent_5_days else 0
+    overall_avg_buy = s.get('whale_buyavg', 0)
 
     if overall_avg_buy > 0:
         if avg_recent_buy > overall_avg_buy * 1.02:
@@ -188,15 +188,15 @@ def calculate_signals_and_recommendation(summary, daily):
             signals.append('Tren harga stabil/sideways')
 
     # Signal 4: Shark pricing behavior
-    avg_buy = s.get('shark_buyavg', 0)
-    avg_sell = s.get('shark_sellavg', 0)
+    avg_buy = s.get('whale_buyavg', 0)
+    avg_sell = s.get('whale_sellavg', 0)
     if avg_buy > 0:
         if avg_sell > avg_buy * 1.05:
             score += 1
-            signals.append('Shark jual di harga lebih tinggi (take profit)')
+            signals.append('Whale jual di harga lebih tinggi (take profit)')
         elif avg_sell < avg_buy * 0.95:
             score -= 1
-            signals.append('Shark jual di harga lebih rendah (cut loss)')
+            signals.append('Whale jual di harga lebih rendah (cut loss)')
 
     # Determine strength
     if abs(score) >= 3:
@@ -221,7 +221,7 @@ def calculate_signals_and_recommendation(summary, daily):
     return {
         'score': round(score, 2),
         'signals': signals,
-        'sharkSignal': shark_signal,
+        'whaleSignal': shark_signal,
         'retailSignal': retail_signal,
         'retailBullishReason': retail_bullish_reason,
         'retailBearishReason': retail_bearish_reason,
@@ -232,18 +232,19 @@ def calculate_signals_and_recommendation(summary, daily):
 
 def calculate_volatility_and_trend(daily, summary):
     """Calculate volatility, trend direction and strength"""
-    all_shark_buy_prices = [d.get('shark_buyavg', 0) for d in daily if d.get('shark_buyavg', 0) > 0]
-    all_shark_sell_prices = [d.get('shark_sellavg', 0) for d in daily if d.get('shark_sellavg', 0) > 0]
+    all_shark_buy_prices = [d.get('whale_buyavg', 0) for d in daily if d.get('whale_buyavg', 0) > 0]
+    all_shark_sell_prices = [d.get('whale_sellavg', 0) for d in daily if d.get('whale_sellavg', 0) > 0]
 
     if not all_shark_buy_prices:
         return {
             'volatilityFactor': 0.05,
             'trendDirection': 'SIDEWAYS',
             'trendStrength': 0,
-            'minSharkBuy': 0,
-            'maxSharkBuy': 0,
-            'avgSharkBuy': 0,
-            'avgSharkSell': 0
+            'minWhaleBuy': 0,
+            'maxWhaleBuy': 0,
+            'avgWhaleBuy': 0,
+            'avgWhaleSell': 0,
+            'lastWhaleBuyPrice': 0
         }
 
     min_shark_buy = min(all_shark_buy_prices)
@@ -257,8 +258,8 @@ def calculate_volatility_and_trend(daily, summary):
     # Daily ranges (intraday high-low approximation)
     daily_ranges = []
     for d in daily:
-        buy = d.get('shark_buyavg', 0)
-        sell = d.get('shark_sellavg', 0)
+        buy = d.get('whale_buyavg', 0)
+        sell = d.get('whale_sellavg', 0)
         if buy > 0 and sell > buy:
             daily_ranges.append((sell - buy) / buy)
 
@@ -273,8 +274,8 @@ def calculate_volatility_and_trend(daily, summary):
     first_half = daily[:mid_point] if mid_point > 0 else daily
     second_half = daily[mid_point:] if mid_point > 0 else daily
 
-    first_half_avg_buy = sum(d.get('shark_buyavg', 0) for d in first_half) / len(first_half) if first_half else 0
-    second_half_avg_buy = sum(d.get('shark_buyavg', 0) for d in second_half) / len(second_half) if second_half else 0
+    first_half_avg_buy = sum(d.get('whale_buyavg', 0) for d in first_half) / len(first_half) if first_half else 0
+    second_half_avg_buy = sum(d.get('whale_buyavg', 0) for d in second_half) / len(second_half) if second_half else 0
 
     if first_half_avg_buy > 0:
         trend_percent = ((second_half_avg_buy - first_half_avg_buy) / first_half_avg_buy) * 100
@@ -294,17 +295,17 @@ def calculate_volatility_and_trend(daily, summary):
         'volatilityFactor': round(volatility_factor, 4),
         'trendDirection': trend_direction,
         'trendStrength': round(trend_strength, 2),
-        'minSharkBuy': round(min_shark_buy, 2),
-        'maxSharkBuy': round(max_shark_buy, 2),
-        'avgSharkBuy': round(avg_shark_buy, 2),
-        'avgSharkSell': round(avg_shark_sell, 2),
-        'lastSharkBuyPrice': round(all_shark_buy_prices[-1], 2) if all_shark_buy_prices else 0
+        'minWhaleBuy': round(min_shark_buy, 2),
+        'maxWhaleBuy': round(max_shark_buy, 2),
+        'avgWhaleBuy': round(avg_shark_buy, 2),
+        'avgWhaleSell': round(avg_shark_sell, 2),
+        'lastWhaleBuyPrice': round(all_shark_buy_prices[-1], 2) if all_shark_buy_prices else 0
     }
 
 def calculate_price_recommendations(summary, daily, vt_data, signal_data):
     """Calculate buyZone, targetPrice, sellZone, stopLoss with BEI tick size"""
-    all_shark_buy_prices = [d.get('shark_buyavg', 0) for d in daily if d.get('shark_buyavg', 0) > 0]
-    all_shark_sell_prices = [d.get('shark_sellavg', 0) for d in daily if d.get('shark_sellavg', 0) > 0]
+    all_shark_buy_prices = [d.get('whale_buyavg', 0) for d in daily if d.get('whale_buyavg', 0) > 0]
+    all_shark_sell_prices = [d.get('whale_sellavg', 0) for d in daily if d.get('whale_sellavg', 0) > 0]
 
     if not all_shark_buy_prices or not all_shark_sell_prices:
         return {
@@ -317,10 +318,10 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
             'potentialLoss': 0
         }
 
-    min_shark_buy = vt_data['minSharkBuy']
-    max_shark_buy = vt_data['maxSharkBuy']
-    avg_shark_buy = vt_data['avgSharkBuy']
-    avg_shark_sell = vt_data['avgSharkSell']
+    min_shark_buy = vt_data['minWhaleBuy']
+    max_shark_buy = vt_data['maxWhaleBuy']
+    avg_shark_buy = vt_data['avgWhaleBuy']
+    avg_shark_sell = vt_data['avgWhaleSell']
     volatility_factor = vt_data['volatilityFactor']
     trend_direction = vt_data['trendDirection']
 
@@ -330,15 +331,15 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
     else:
         recent_5_days = daily
 
-    recent_buy_prices = [d.get('shark_buyavg', 0) for d in recent_5_days if d.get('shark_buyavg', 0) > 0]
+    recent_buy_prices = [d.get('whale_buyavg', 0) for d in recent_5_days if d.get('whale_buyavg', 0) > 0]
     lowest_recent_buy = min(recent_buy_prices) if recent_buy_prices else min_shark_buy
 
     # VWAP calculation
     weighted_buy_sum = 0
     total_buy_weight = 0
     for d in daily:
-        shark_buyavg = d.get('shark_buyavg', 0)
-        shark_buy = d.get('shark_buy', 0)
+        shark_buyavg = d.get('whale_buyavg', 0)
+        shark_buy = d.get('whale_buy', 0)
         if shark_buyavg > 0 and shark_buy > 0:
             weighted_buy_sum += shark_buyavg * shark_buy
             total_buy_weight += shark_buy
@@ -360,9 +361,9 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
     base_target = avg_shark_sell
 
     # Resistance zones
-    resistance_levels = [d for d in daily if d.get('shark_sellavg', 0) > avg_shark_sell * 1.02]
+    resistance_levels = [d for d in daily if d.get('whale_sellavg', 0) > avg_shark_sell * 1.02]
     if resistance_levels:
-        strong_resistance = sum(d.get('shark_sellavg', 0) for d in resistance_levels) / len(resistance_levels)
+        strong_resistance = sum(d.get('whale_sellavg', 0) for d in resistance_levels) / len(resistance_levels)
     else:
         strong_resistance = avg_shark_sell
 
@@ -380,11 +381,11 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
     # Sell zone calculation
     high_sell_activity_days = [
         d for d in daily
-        if d.get('shark_sell', 0) > d.get('shark_buy', 0) * 1.5 and d.get('shark_sellavg', 0) > avg_shark_buy
+        if d.get('whale_sell', 0) > d.get('whale_buy', 0) * 1.5 and d.get('whale_sellavg', 0) > avg_shark_buy
     ]
 
     if high_sell_activity_days:
-        distribution_zone = sum(d.get('shark_sellavg', 0) for d in high_sell_activity_days) / len(high_sell_activity_days)
+        distribution_zone = sum(d.get('whale_sellavg', 0) for d in high_sell_activity_days) / len(high_sell_activity_days)
     else:
         distribution_zone = avg_shark_sell
 
@@ -400,8 +401,8 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
     # Daily ranges for ATR-like calculation
     daily_ranges = []
     for d in daily:
-        buy = d.get('shark_buyavg', 0)
-        sell = d.get('shark_sellavg', 0)
+        buy = d.get('whale_buyavg', 0)
+        sell = d.get('whale_sellavg', 0)
         if buy > 0 and sell > buy:
             daily_ranges.append((sell - buy) / buy)
 
@@ -459,8 +460,8 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
         'stopTick': stop_tick,
         'lowestRecentBuy': round(round_to_bei_tick(lowest_recent_buy, True), 0),
         'strongResistance': round(round_to_bei_tick(strong_resistance, False), 0),
-        'minSharkBuyTick': round(round_to_bei_tick(min_shark_buy, True), 0),
-        'maxSharkBuyTick': round(round_to_bei_tick(max_shark_buy, False), 0)
+        'minWhaleBuyTick': round(round_to_bei_tick(min_shark_buy, True), 0),
+        'maxWhaleBuyTick': round(round_to_bei_tick(max_shark_buy, False), 0)
     }
 
 def calculate_confidence_score(summary, vt_data, signal_data, price_data, recommendation):
@@ -468,21 +469,21 @@ def calculate_confidence_score(summary, vt_data, signal_data, price_data, recomm
     confidence_score = 0
     confidence_factors = []
 
-    shark_net = summary.get('shark_net', 0)
+    shark_net = summary.get('whale_net', 0)
     trend_direction = vt_data['trendDirection']
     rr_ratio = price_data.get('rrRatio', 0)
-    min_shark_buy = vt_data['minSharkBuy']
-    max_shark_buy = vt_data['maxSharkBuy']
-    avg_shark_buy = vt_data['avgSharkBuy']
+    min_shark_buy = vt_data['minWhaleBuy']
+    max_shark_buy = vt_data['maxWhaleBuy']
+    avg_shark_buy = vt_data['avgWhaleBuy']
     volatility_factor = vt_data['volatilityFactor']
 
     # Factor 1: Shark accumulation strength
     if shark_net > 5:
         confidence_score += 25
-        confidence_factors.append('Akumulasi Shark kuat')
+        confidence_factors.append('Akumulasi Whale kuat')
     elif shark_net > 1:
         confidence_score += 15
-        confidence_factors.append('Akumulasi Shark moderat')
+        confidence_factors.append('Akumulasi Whale moderat')
 
     # Factor 2: Trend alignment
     if trend_direction == 'UPTREND' and recommendation == 'BUY':
@@ -555,24 +556,24 @@ def generate_insights(summary, daily, vt_data):
     retail_peak_day = 0
 
     for d in daily:
-        if d.get('shark_cum_net', 0) > shark_peak:
-            shark_peak = d.get('shark_cum_net', 0)
+        if d.get('whale_cum_net', 0) > shark_peak:
+            shark_peak = d.get('whale_cum_net', 0)
             shark_peak_day = d.get('day', 0)
         if d.get('retail_cum_net', 0) > retail_peak:
             retail_peak = d.get('retail_cum_net', 0)
             retail_peak_day = d.get('day', 0)
 
-    whale_net = summary.get('shark_net', 0)
+    whale_net = summary.get('whale_net', 0)
     fishermen_net = summary.get('retail_net', 0)
 
     # Shark insight
     if whale_net < 0:
-        shark_insight = f"Shark melakukan <span class=\"highlight\">DISTRIBUSI</span> sebesar <span class=\"highlight\">Rp {abs(whale_net):.1f} Miliar</span> dalam {days} hari transaksi. "
+        shark_insight = f"Whale melakukan <span class=\"highlight\">DISTRIBUSI</span> sebesar <span class=\"highlight\">Rp {abs(whale_net):.1f} Miliar</span> dalam {days} hari transaksi. "
         if shark_peak_day > 0:
             shark_insight += f"Puncak akumulasi tercapai di hari ke-{shark_peak_day} (+{shark_peak:.1f} M), setelah itu mulai distribusi bertahap. "
         shark_insight += "Ini mengindikasikan <span class=\"highlight\">take profit</span> oleh institusi besar."
     else:
-        shark_insight = f"Shark melakukan <span class=\"highlight\">AKUMULASI</span> sebesar <span class=\"highlight\">Rp {whale_net:.1f} Miliar</span> dalam {days} hari transaksi. Institusi sedang membeli saham ini."
+        shark_insight = f"Whale melakukan <span class=\"highlight\">AKUMULASI</span> sebesar <span class=\"highlight\">Rp {whale_net:.1f} Miliar</span> dalam {days} hari transaksi. Institusi sedang membeli saham ini."
 
     # Retail insight
     if fishermen_net > 0:
@@ -584,10 +585,10 @@ def generate_insights(summary, daily, vt_data):
         retail_insight = f"Retail melakukan <span class=\"highlight\">DISTRIBUSI</span> sebesar <span class=\"highlight\">Rp {abs(fishermen_net):.1f} Miliar</span> dalam {days} hari transaksi. Investor retail sedang profit taking."
 
     return {
-        'sharkInsight': shark_insight,
+        'whaleInsight': shark_insight,
         'retailInsight': retail_insight,
-        'sharkPeak': round(shark_peak, 2),
-        'sharkPeakDay': shark_peak_day,
+        'whalePeak': round(shark_peak, 2),
+        'whalePeakDay': shark_peak_day,
         'retailPeak': round(retail_peak, 2),
         'retailPeakDay': retail_peak_day
     }
@@ -598,8 +599,8 @@ def read_csv_file_cumulative(file_path):
         'date_start': None,
         'date_end': None,
         'date_display': None,
-        'shark_buyavg': 0,
-        'shark_sellavg': 0,
+        'whale_buyavg': 0,
+        'whale_sellavg': 0,
         'retail_buyavg': 0,
         'retail_sellavg': 0,
         'brokers': {}
@@ -684,9 +685,9 @@ def read_csv_file_cumulative(file_path):
                 retail_total_sell_avg += sell_avg * sell_val
 
         if shark_total_buy_val > 0:
-            result['shark_buyavg'] = shark_total_buy_avg / shark_total_buy_val
+            result['whale_buyavg'] = shark_total_buy_avg / shark_total_buy_val
         if shark_total_sell_val > 0:
-            result['shark_sellavg'] = shark_total_sell_avg / shark_total_sell_val
+            result['whale_sellavg'] = shark_total_sell_avg / shark_total_sell_val
         if retail_total_buy_val > 0:
             result['retail_buyavg'] = retail_total_buy_avg / retail_total_buy_val
         if retail_total_sell_val > 0:
@@ -861,7 +862,7 @@ def process_stock_folder(stock_code, base_path):
             sell_lot_for_avg = daily_sell_lot if daily_sell_lot > 0 else 0
 
             if broker_code not in all_brokers_data:
-                category = 'shark' if broker_code in SHARK_BROKERS else 'retail'
+                category = 'whale' if broker_code in SHARK_BROKERS else 'retail'
                 all_brokers_data[broker_code] = {
                     'code': broker_code,
                     'name': get_broker_name(broker_code),
@@ -992,27 +993,27 @@ def process_stock_folder(stock_code, base_path):
             'date': cum_data['date_start'] or 'Unknown',
             'date_display': cum_data['date_display'] or 'Unknown',
             'date_end': cum_data['date_end'] or 'Unknown',
-            'shark_buy': round(daily_shark_buy, 2),
+            'whale_buy': round(daily_shark_buy, 2),
             'retail_buy': round(daily_retail_buy, 2),
-            'shark_sell': round(daily_shark_sell, 2),
+            'whale_sell': round(daily_shark_sell, 2),
             'retail_sell': round(daily_retail_sell, 2),
-            'shark_buyavg': round(daily_shark_buyavg, 2),
-            'shark_sellavg': round(daily_shark_sellavg, 2),
+            'whale_buyavg': round(daily_shark_buyavg, 2),
+            'whale_sellavg': round(daily_shark_sellavg, 2),
             'retail_buyavg': round(daily_retail_buyavg, 2),
             'retail_sellavg': round(daily_retail_sellavg, 2),
-            'shark_cum_buy': round(total_shark_cum_buy, 2),
+            'whale_cum_buy': round(total_shark_cum_buy, 2),
             'retail_cum_buy': round(total_retail_cum_buy, 2),
-            'shark_cum_sell': round(total_shark_cum_sell, 2),
+            'whale_cum_sell': round(total_shark_cum_sell, 2),
             'retail_cum_sell': round(total_retail_cum_sell, 2),
-            'shark_net': round(shark_net, 2),
+            'whale_net': round(shark_net, 2),
             'retail_net': round(retail_net, 2),
-            'shark_cum_net': round(total_shark_cum_buy - total_shark_cum_sell, 2),
+            'whale_cum_net': round(total_shark_cum_buy - total_shark_cum_sell, 2),
             'retail_cum_net': round(total_retail_cum_buy - total_retail_cum_sell, 2),
-            'shark_cum_buy_lot': round(total_shark_cum_buy_lot),
-            'shark_cum_sell_lot': round(total_shark_cum_sell_lot),
+            'whale_cum_buy_lot': round(total_shark_cum_buy_lot),
+            'whale_cum_sell_lot': round(total_shark_cum_sell_lot),
             'retail_cum_buy_lot': round(total_retail_cum_buy_lot),
             'retail_cum_sell_lot': round(total_retail_cum_sell_lot),
-            'shark_net_lot': round(shark_net_lot),
+            'whale_net_lot': round(shark_net_lot),
             'retail_net_lot': round(retail_net_lot)
         })
 
@@ -1040,23 +1041,23 @@ def process_stock_folder(stock_code, base_path):
 
     # Build summary
     summary = {
-        'shark_buy': round(total_shark_cum_buy, 2),
+        'whale_buy': round(total_shark_cum_buy, 2),
         'retail_buy': round(total_retail_cum_buy, 2),
-        'shark_sell': round(total_shark_cum_sell, 2),
+        'whale_sell': round(total_shark_cum_sell, 2),
         'retail_sell': round(total_retail_cum_sell, 2),
-        'shark_buyavg': round(summary_shark_buyavg, 2),
+        'whale_buyavg': round(summary_shark_buyavg, 2),
         'retail_buyavg': round(summary_retail_buyavg, 2),
-        'shark_sellavg': round(summary_shark_sellavg, 2),
+        'whale_sellavg': round(summary_shark_sellavg, 2),
         'retail_sellavg': round(summary_retail_sellavg, 2),
-        'shark_net': round(total_shark_cum_buy - total_shark_cum_sell, 2),
+        'whale_net': round(total_shark_cum_buy - total_shark_cum_sell, 2),
         'retail_net': round(total_retail_cum_buy - total_retail_cum_sell, 2),
         'total_buy': round(total_shark_cum_buy + total_retail_cum_buy, 2),
         'total_sell': round(total_shark_cum_sell + total_retail_cum_sell, 2),
-        'shark_cum_buy_lot': round(total_shark_cum_buy_lot),
-        'shark_cum_sell_lot': round(total_shark_cum_sell_lot),
+        'whale_cum_buy_lot': round(total_shark_cum_buy_lot),
+        'whale_cum_sell_lot': round(total_shark_cum_sell_lot),
         'retail_cum_buy_lot': round(total_retail_cum_buy_lot),
         'retail_cum_sell_lot': round(total_retail_cum_sell_lot),
-        'shark_net_lot': round(total_shark_cum_buy_lot - total_shark_cum_sell_lot),
+        'whale_net_lot': round(total_shark_cum_buy_lot - total_shark_cum_sell_lot),
         'retail_net_lot': round(total_retail_cum_buy_lot - total_retail_cum_sell_lot)
     }
 

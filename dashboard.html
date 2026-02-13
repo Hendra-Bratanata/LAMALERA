@@ -84,7 +84,7 @@
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
-        .stat-card.shark {
+        .stat-card.whale {
             border-top: 3px solid #e74c3c;
             background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(255,255,255,0.05));
         }
@@ -404,7 +404,7 @@
             padding-bottom: 12px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        .legend-header.shark {
+        .legend-header.whale {
             color: #e74c3c;
         }
         .legend-header.retail {
@@ -566,7 +566,7 @@
             font-weight: bold;
             text-transform: uppercase;
         }
-        .badge.shark {
+        .badge.whale {
             background: rgba(231, 76, 60, 0.2);
             color: #e74c3c;
         }
@@ -759,11 +759,11 @@
         <div id="dashboardContent" style="display: none;">
             <!-- Summary Stats -->
             <div class="stats-grid">
-                <div class="stat-card shark">
-                    <h3>Shark BUY</h3>
-                    <div class="value" id="sharkBuy">-</div>
-                    <div class="subtext" id="sharkBuyAvg">Avg: -</div>
-                    <div class="subtext" id="sharkBuyPct">-</div>
+                <div class="stat-card whale">
+                    <h3>Whale BUY</h3>
+                    <div class="value" id="whaleBuy">-</div>
+                    <div class="subtext" id="whaleBuyAvgDisplay">Avg: -</div>
+                    <div class="subtext" id="whaleBuyPct">-</div>
                 </div>
                 <div class="stat-card retail">
                     <h3>Retail BUY</h3>
@@ -771,11 +771,11 @@
                     <div class="subtext" id="retailBuyAvg">Avg: -</div>
                     <div class="subtext" id="retailBuyPct">-</div>
                 </div>
-                <div class="stat-card shark">
-                    <h3>Shark SELL</h3>
-                    <div class="value" id="sharkSell">-</div>
-                    <div class="subtext" id="sharkSellAvg">Avg: -</div>
-                    <div class="subtext" id="sharkSellPct">-</div>
+                <div class="stat-card whale">
+                    <h3>Whale SELL</h3>
+                    <div class="value" id="whaleSell">-</div>
+                    <div class="subtext" id="whaleSellAvgDisplay">Avg: -</div>
+                    <div class="subtext" id="whaleSellPct">-</div>
                 </div>
                 <div class="stat-card retail">
                     <h3>Retail SELL</h3>
@@ -783,20 +783,35 @@
                     <div class="subtext" id="retailSellAvg">Avg: -</div>
                     <div class="subtext" id="retailSellPct">-</div>
                 </div>
-                <div class="stat-card shark">
-                    <h3>Shark NET</h3>
-                    <div class="value" id="sharkNet">-</div>
-                    <div class="subtext" id="sharkNetStatus">-</div>
+                <div class="stat-card whale">
+                    <h3>Whale NET</h3>
+                    <div class="value" id="whaleNet">-</div>
+                    <div class="subtext" id="whaleNetStatus">-</div>
                 </div>
                 <div class="stat-card retail">
                     <h3>Retail NET</h3>
                     <div class="value" id="retailNet">-</div>
                     <div class="subtext" id="retailNetStatus">-</div>
                 </div>
-                <div class="stat-card shark">
-                    <h3>Shark Kepemilikan</h3>
-                    <div class="value" id="sharkOwnership">-</div>
-                    <div class="subtext" id="sharkOwnershipLot">Net Lot</div>
+                <div class="stat-card whale">
+                    <h3>Whale BUY AVG</h3>
+                    <div class="value" id="whaleBuyAvg">-</div>
+                    <div class="subtext" id="whaleBuyAvgLabel">Rata-rata harga beli</div>
+                </div>
+                <div class="stat-card whale">
+                    <h3>Whale SELL AVG</h3>
+                    <div class="value" id="whaleSellAvg">-</div>
+                    <div class="subtext" id="whaleSellAvgLabel">Rata-rata harga jual</div>
+                </div>
+                <div class="stat-card whale">
+                    <h3>Whale Kepemilikan</h3>
+                    <div class="value" id="whaleOwnership">-</div>
+                    <div class="subtext" id="whaleOwnershipLot">Net Lot</div>
+                </div>
+                <div class="stat-card whale">
+                    <h3>Harga Terakhir Whale</h3>
+                    <div class="value" id="whaleLastPrice">-</div>
+                    <div class="subtext" id="whaleLastPriceLabel">Harga beli terakhir</div>
                 </div>
                 <div class="stat-card retail">
                     <h3>Retail Kepemilikan</h3>
@@ -812,8 +827,8 @@
                     <p id="recommendationReason" class="rec-reason">Memuat rekomendasi...</p>
                     <div class="rec-signals">
                         <div class="signal-item">
-                            <span class="signal-label">Signal Shark:</span>
-                            <span id="sharkSignal" class="signal-value">-</span>
+                            <span class="signal-label">Signal Whale:</span>
+                            <span id="whaleSignal" class="signal-value">-</span>
                         </div>
                         <div class="signal-item">
                             <span class="signal-label">Signal Retail:</span>
@@ -862,8 +877,8 @@
             <!-- Insight Panel -->
             <div class="insight-panel">
                 <div class="insight-card">
-                    <h3>Analisis Shark</h3>
-                    <p id="sharkInsight">Memuat analisis...</p>
+                    <h3>Analisis Whale</h3>
+                    <p id="whaleInsight">Memuat analisis...</p>
                 </div>
                 <div class="insight-card">
                     <h3>Analisis Retail</h3>
@@ -876,13 +891,13 @@
                     <h2 class="stock-title" id="chartStockTitle6">BUMI - Harga Rata-rata & Cumulative Flow</h2>
                 </div>
                 <div class="chart-container full-width">
-                    <h2>Harga Rata-rata Beli/Jual & Cumulative Net Flow (Shark + Ritel)</h2>
+                    <h2>Harga Rata-rata Beli/Jual & Cumulative Net Flow (Whale + Ritel)</h2>
                     <div class="legend">
-                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Shark Buy Avg</div>
-                        <div class="legend-item"><div class="legend-color" style="background: #c0392b;"></div>Shark Sell Avg</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Whale Buy Avg</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #c0392b;"></div>Whale Sell Avg</div>
                         <div class="legend-item"><div class="legend-color" style="background: #3498db;"></div>Ritel Buy Avg</div>
                         <div class="legend-item"><div class="legend-color" style="background: #2980b9;"></div>Ritel Sell Avg</div>
-                        <div class="legend-item"><div class="legend-color" style="background: #e67e22; border: 2px solid #d35400;"></div>Shark Cum Flow</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #e67e22; border: 2px solid #d35400;"></div>Whale Cum Flow</div>
                         <div class="legend-item"><div class="legend-color" style="background: #27ae60; border: 2px solid #1e8449;"></div>Ritel Cum Flow</div>
                     </div>
                     <div class="chart-wrapper tall">
@@ -890,7 +905,7 @@
                     </div>
                     <div class="chart-description" style="border-left-color: #1abc9c;">
                         <strong>📊📈 Kombinasi Harga & Cumulative Flow (Combo Chart)</strong><br>
-                        Menampilkan harga rata-rata Shark/Ritel dengan line, dan cumulative net flow dengan area chart.<br>
+                        Menampilkan harga rata-rata Whale/Ritel dengan line, dan cumulative net flow dengan area chart.<br>
                         <strong>Perhitungan Harga:</strong> <code>avg_buy = (Σ harga × volume) / Σ volume</code><br>
                         <strong>Perhitungan Flow:</strong> <code>cum_flow = Σ(buy - sell) dari hari ke-1 sampai hari ini</code><br>
                         Gabungan keduanya untuk melihat korelasi harga dengan aliran dana.
@@ -901,24 +916,24 @@
             <div class="legend-panel">
                 <h2 style="color: #27ae60; font-size: 1.1rem; margin-bottom: 20px; font-weight: 600;">📖 Panduan Signal & Legend</h2>
                 <div class="legend-grid">
-                    <!-- Shark Signal Legend -->
+                    <!-- Whale Signal Legend -->
                     <div class="legend-item">
-                        <div class="legend-header shark">
+                        <div class="legend-header whale">
                             <span class="legend-icon">🐋</span>
-                            <span class="legend-title">Signal Shark</span>
+                            <span class="legend-title">Signal Whale</span>
                         </div>
                         <div class="legend-body">
                             <div class="legend-desc">
                                 <span class="signal-badge bullish">Bullish (Akumulasi)</span>
-                                <span class="legend-text">Shark sedang BELI (akumulasi) → Harga potensial NAIK</span>
+                                <span class="legend-text">Whale sedang BELI (akumulasi) → Harga potensial NAIK</span>
                             </div>
                             <div class="legend-desc">
                                 <span class="signal-badge bearish">Bearish (Distribusi)</span>
-                                <span class="legend-text">Shark sedang JUAL (take profit) → Harga potensial TURUN</span>
+                                <span class="legend-text">Whale sedang JUAL (take profit) → Harga potensial TURUN</span>
                             </div>
                             <div class="legend-desc">
                                 <span class="signal-badge neutral">Netral (Sideways)</span>
-                                <span class="legend-text">Shark tidak ada aktivitas signifikan</span>
+                                <span class="legend-text">Whale tidak ada aktivitas signifikan</span>
                             </div>
                         </div>
                     </div>
@@ -961,11 +976,11 @@
                             <div class="logic-grid">
                                 <div class="logic-item">
                                     <span class="logic-phase">Fase Akumulasi</span>
-                                    <span class="logic-desc">Shark BELI, Retail JUAL (takut) → Signal <strong>BUY</strong></span>
+                                    <span class="logic-desc">Whale BELI, Retail JUAL (takut) → Signal <strong>BUY</strong></span>
                                 </div>
                                 <div class="logic-item">
                                     <span class="logic-phase">Fase Distribusi</span>
-                                    <span class="logic-desc">Shark JUAL, Retail BELI (euforia) → Signal <strong>SELL</strong></span>
+                                    <span class="logic-desc">Whale JUAL, Retail BELI (euforia) → Signal <strong>SELL</strong></span>
                                 </div>
                             </div>
                             <div class="legend-note">
@@ -984,7 +999,7 @@
                 <div class="chart-container">
                     <h2>Komposisi BUY</h2>
                     <div class="legend">
-                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Shark</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Whale</div>
                         <div class="legend-item"><div class="legend-color" style="background: #3498db;"></div>Ritel</div>
                     </div>
                     <div class="chart-wrapper">
@@ -992,14 +1007,14 @@
                     </div>
                     <div class="chart-description" style="border-left-color: #e74c3c;">
                         <strong>📊 Komposisi BUY (Pie Chart)</strong><br>
-                        Menunjukkan proporsi nilai pembelian antara <em>Shark</em> dan <em>Ritel</em>.<br>
+                        Menunjukkan proporsi nilai pembelian antara <em>Whale</em> dan <em>Ritel</em>.<br>
                         <strong>Perhitungan:</strong> Total nilai BUY dalam Triliun Rupiah dari seluruh periode data.
                     </div>
                 </div>
                 <div class="chart-container">
                     <h2>Komposisi SELL</h2>
                     <div class="legend">
-                        <div class="legend-item"><div class="legend-color" style="background: #c0392b;"></div>Shark</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #c0392b;"></div>Whale</div>
                         <div class="legend-item"><div class="legend-color" style="background: #2980b9;"></div>Ritel</div>
                     </div>
                     <div class="chart-wrapper">
@@ -1007,7 +1022,7 @@
                     </div>
                     <div class="chart-description" style="border-left-color: #c0392b;">
                         <strong>📊 Komposisi SELL (Pie Chart)</strong><br>
-                        Menunjukkan proporsi nilai penjualan antara <em>Shark</em> dan <em>Ritel</em>.<br>
+                        Menunjukkan proporsi nilai penjualan antara <em>Whale</em> dan <em>Ritel</em>.<br>
                         <strong>Perhitungan:</strong> Total nilai SELL dalam Triliun Rupiah dari seluruh periode data.
                     </div>
                 </div>
@@ -1020,7 +1035,7 @@
                 <div class="chart-container full-width">
                     <h2>Cumulative Net Flow (Akumulasi)</h2>
                     <div class="legend">
-                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Shark</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Whale</div>
                         <div class="legend-item"><div class="legend-color" style="background: #3498db;"></div>Ritel</div>
                     </div>
                     <div class="chart-wrapper tall">
@@ -1029,7 +1044,7 @@
                     <div class="chart-description" style="border-left-color: #27ae60;">
                         <strong>📈 Cumulative Net Flow (Line Chart)</strong><br>
                         Menunjukkan akumulasi aliran dana bersih (BUY - SELL) dari waktu ke waktu.<br>
-                        <strong>Perhitungan:</strong> <code>shark_cum_net = Σ(shark_buy_harian) - Σ(shark_sell_harian)</code><br>
+                        <strong>Perhitungan:</strong> <code>whale_cum_net = Σ(whale_buy_harian) - Σ(whale_sell_harian)</code><br>
                         Nilai positif = akumulasi beli, negatif = akumulasi jual.
                     </div>
                 </div>
@@ -1040,10 +1055,10 @@
                     <h2 class="stock-title" id="chartStockTitle3">BUMI - Rata-rata Harga</h2>
                 </div>
                 <div class="chart-container full-width">
-                    <h2>Rata-rata Harga Shark & Ritel per Hari</h2>
+                    <h2>Rata-rata Harga Whale & Ritel per Hari</h2>
                     <div class="legend">
-                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Shark Buy Avg</div>
-                        <div class="legend-item"><div class="legend-color" style="background: #c0392b;"></div>Shark Sell Avg</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Whale Buy Avg</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #c0392b;"></div>Whale Sell Avg</div>
                         <div class="legend-item"><div class="legend-color" style="background: #3498db;"></div>Ritel Buy Avg</div>
                         <div class="legend-item"><div class="legend-color" style="background: #2980b9;"></div>Ritel Sell Avg</div>
                     </div>
@@ -1052,8 +1067,8 @@
                     </div>
                     <div class="chart-description" style="border-left-color: #3498db;">
                         <strong>💰 Rata-rata Harga per Hari (Line Chart)</strong><br>
-                        Menunjukkan harga rata-rata beli dan jual Shark & Ritel setiap hari.<br>
-                        <strong>Perhitungan:</strong> <code>avg_shark_buy = (Σ harga_beli × nilai_beli) / Σ nilai_beli</code><br>
+                        Menunjukkan harga rata-rata beli dan jual Whale & Ritel setiap hari.<br>
+                        <strong>Perhitungan:</strong> <code>avg_whale_buy = (Σ harga_beli × nilai_beli) / Σ nilai_beli</code><br>
                         Harga weighted berdasarkan volume transaksi hari itu.
                     </div>
                 </div>
@@ -1066,7 +1081,7 @@
                 <div class="chart-container full-width">
                     <h2>Kepemilikan Saham (Net Lot) - Akumulasi</h2>
                     <div class="legend">
-                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Shark Net Lot</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Whale Net Lot</div>
                         <div class="legend-item"><div class="legend-color" style="background: #3498db;"></div>Ritel Net Lot</div>
                     </div>
                     <div class="chart-wrapper tall">
@@ -1075,7 +1090,7 @@
                     <div class="chart-description" style="border-left-color: #f39c12;">
                         <strong>🏦 Kepemilikan Saham Net Lot (Line Chart)</strong><br>
                         Menunjukkan akumulasi kepemilikan lot bersih (BUY lot - SELL lot).<br>
-                        <strong>Perhitungan:</strong> <code>shark_net_lot = Σ(shark_buy_lot) - Σ(shark_sell_lot)</code><br>
+                        <strong>Perhitungan:</strong> <code>whale_net_lot = Σ(whale_buy_lot) - Σ(whale_sell_lot)</code><br>
                         Positif = akumulasi holding, negatif = melepaskan saham.
                     </div>
                 </div>
@@ -1097,7 +1112,7 @@
                     <div class="chart-description" style="border-left-color: #9b59b6;">
                         <strong>🏆 Top 15 Brokers by Volume (Bar Chart)</strong><br>
                         Menunjukkan broker dengan volume transaksi terbesar (BUY + SELL).<br>
-                        <strong>Perhitungan:</strong> <code>total_volume = shark_buy + shark_sell (dalam Triliun Rupiah)</code><br>
+                        <strong>Perhitungan:</strong> <code>total_volume = whale_buy + whale_sell (dalam Triliun Rupiah)</code><br>
                         Diurutkan dari total transaksi terbesar.
                     </div>
                 </div>
@@ -1108,7 +1123,7 @@
                     <h3>Daftar Broker</h3>
                     <div class="filter-group">
                         <button class="filter-btn active" onclick="filterTable('all')">Semua</button>
-                        <button class="filter-btn" onclick="filterTable('shark')">Shark Only</button>
+                        <button class="filter-btn" onclick="filterTable('whale')">Whale Only</button>
                         <button class="filter-btn" onclick="filterTable('retail')">Ritel Only</button>
                     </div>
                 </div>
@@ -1203,41 +1218,65 @@
             const totalBuy = s.total_buy;
             const totalSell = s.total_sell;
 
-            document.getElementById('sharkBuy').textContent = `Rp ${s.shark_buy} T`;
-            document.getElementById('sharkBuyAvg').textContent = `Avg: Rp ${s.shark_buyavg}`;
-            document.getElementById('sharkBuyPct').textContent = `${((s.shark_buy / totalBuy) * 100).toFixed(0)}% dari total`;
+            document.getElementById('whaleBuy').textContent = `Rp ${s.whale_buy} T`;
+            document.getElementById('whaleBuyAvgDisplay').textContent = `Avg: Rp ${s.whale_buyavg}`;
+            document.getElementById('whaleBuyPct').textContent = `${((s.whale_buy / totalBuy) * 100).toFixed(0)}% dari total`;
 
             document.getElementById('retailBuy').textContent = `Rp ${s.retail_buy} T`;
             document.getElementById('retailBuyAvg').textContent = `Avg: Rp ${s.retail_buyavg}`;
             document.getElementById('retailBuyPct').textContent = `${((s.retail_buy / totalBuy) * 100).toFixed(0)}% dari total`;
 
-            document.getElementById('sharkSell').textContent = `Rp ${s.shark_sell} T`;
-            document.getElementById('sharkSellAvg').textContent = `Avg: Rp ${s.shark_sellavg}`;
-            document.getElementById('sharkSellPct').textContent = `${((s.shark_sell / totalSell) * 100).toFixed(0)}% dari total`;
+            document.getElementById('whaleSell').textContent = `Rp ${s.whale_sell} T`;
+            document.getElementById('whaleSellAvgDisplay').textContent = `Avg: Rp ${s.whale_sellavg}`;
+            document.getElementById('whaleSellPct').textContent = `${((s.whale_sell / totalSell) * 100).toFixed(0)}% dari total`;
 
             document.getElementById('retailSell').textContent = `Rp ${s.retail_sell} T`;
             document.getElementById('retailSellAvg').textContent = `Avg: Rp ${s.retail_sellavg}`;
             document.getElementById('retailSellPct').textContent = `${((s.retail_sell / totalSell) * 100).toFixed(0)}% dari total`;
 
-            const whaleNetEl = document.getElementById('sharkNet');
-            whaleNetEl.textContent = `${s.shark_net >= 0 ? '+' : ''}Rp ${Math.abs(s.shark_net)} M`;
-            whaleNetEl.className = 'value ' + (s.shark_net >= 0 ? 'positive' : 'negative');
-            document.getElementById('sharkNetStatus').textContent = s.shark_net >= 0 ? 'AKUMULASI/BELI' : 'DISTRIBUSI/JUAL';
+            // Whale BUY Avg Card
+            const whaleBuyAvgEl = document.getElementById('whaleBuyAvg');
+            whaleBuyAvgEl.textContent = `Rp ${s.whale_buyavg}`;
+            const whaleBuyAvgLabelEl = document.getElementById('whaleBuyAvgLabel');
+            whaleBuyAvgLabelEl.textContent = 'Rata-rata harga beli';
+
+            // Whale SELL Avg Card
+            const whaleSellAvgEl = document.getElementById('whaleSellAvg');
+            whaleSellAvgEl.textContent = `Rp ${s.whale_sellavg}`;
+            const whaleSellAvgLabelEl = document.getElementById('whaleSellAvgLabel');
+            whaleSellAvgLabelEl.textContent = 'Rata-rata harga jual';
+
+            const whaleNetEl = document.getElementById('whaleNet');
+            whaleNetEl.textContent = `${s.whale_net >= 0 ? '+' : ''}Rp ${Math.abs(s.whale_net)} M`;
+            whaleNetEl.className = 'value ' + (s.whale_net >= 0 ? 'positive' : 'negative');
+            document.getElementById('whaleNetStatus').textContent = s.whale_net >= 0 ? 'AKUMULASI/BELI' : 'DISTRIBUSI/JUAL';
 
             const fishermenNetEl = document.getElementById('retailNet');
             fishermenNetEl.textContent = `${s.retail_net >= 0 ? '+' : ''}Rp ${Math.abs(s.retail_net)} M`;
             fishermenNetEl.className = 'value ' + (s.retail_net >= 0 ? 'positive' : 'negative');
             document.getElementById('retailNetStatus').textContent = s.retail_net >= 0 ? 'AKUMULASI/BELI' : 'DISTRIBUSI/JUAL';
 
-            const sharkOwnEl = document.getElementById('sharkOwnership');
-            sharkOwnEl.textContent = `${(s.shark_net >= 0 ? '+' : '')}Rp ${Math.abs(s.shark_net).toFixed(1)} M`;
-            sharkOwnEl.className = 'value ' + (s.shark_net >= 0 ? 'positive' : 'negative');
-            document.getElementById('sharkOwnershipLot').textContent = `${(s.shark_net >= 0 ? '+' : '')}Rp ${Math.abs(s.shark_net).toFixed(1)} Miliar`;
+            const whaleOwnEl = document.getElementById('whaleOwnership');
+            whaleOwnEl.textContent = `${(s.whale_net >= 0 ? '+' : '')}Rp ${Math.abs(s.whale_net).toFixed(1)} M`;
+            whaleOwnEl.className = 'value ' + (s.whale_net >= 0 ? 'positive' : 'negative');
+            document.getElementById('whaleOwnershipLot').textContent = `${(s.whale_net >= 0 ? '+' : '')}Rp ${Math.abs(s.whale_net).toFixed(1)} Miliar`;
 
             const retailOwnEl = document.getElementById('retailOwnership');
             retailOwnEl.textContent = `${(s.retail_net >= 0 ? '+' : '')}Rp ${Math.abs(s.retail_net).toFixed(1)} M`;
             retailOwnEl.className = 'value ' + (s.retail_net >= 0 ? 'positive' : 'negative');
             document.getElementById('retailOwnershipLot').textContent = `${(s.retail_net >= 0 ? '+' : '')}Rp ${Math.abs(s.retail_net).toFixed(1)} Miliar`;
+
+            // Harga Terakhir Shark Card
+            const lastWhaleBuyPrice = currentStock.volatilityTrend?.lastWhaleBuyPrice || 0;
+            const whaleLastPriceEl = document.getElementById('whaleLastPrice');
+            if (lastWhaleBuyPrice > 0) {
+                whaleLastPriceEl.textContent = `Rp ${lastWhaleBuyPrice}`;
+                whaleLastPriceEl.className = 'value positive';
+            } else {
+                whaleLastPriceEl.textContent = '-';
+                whaleLastPriceEl.className = 'value';
+            }
+            document.getElementById('whaleLastPriceLabel').textContent = 'Harga beli terakhir';
         }
 
         /**
@@ -1255,11 +1294,11 @@
             let reason = rec.signals.join('. ');
             document.getElementById('recommendationReason').textContent = reason;
 
-            // Update shark signal
-            const sharkSignalEl = document.getElementById('sharkSignal');
-            sharkSignalEl.textContent = rec.sharkSignal === 'bullish' ? 'Bullish (Akumulasi)' :
-                                       rec.sharkSignal === 'bearish' ? 'Bearish (Distribusi)' : 'Netral';
-            sharkSignalEl.className = 'signal-value ' + rec.sharkSignal;
+            // Update whale signal
+            const whaleSignalEl = document.getElementById('whaleSignal');
+            whaleSignalEl.textContent = rec.whaleSignal === 'bullish' ? 'Bullish (Akumulasi)' :
+                                       rec.whaleSignal === 'bearish' ? 'Bearish (Distribusi)' : 'Netral';
+            whaleSignalEl.className = 'signal-value ' + rec.whaleSignal;
 
             // Update retail signal
             const retailSignalEl = document.getElementById('retailSignal');
@@ -1359,7 +1398,7 @@
             const insights = currentStock.insights;
             const days = currentStock.daily.length;
 
-            document.getElementById('sharkInsight').innerHTML = insights.sharkInsight;
+            document.getElementById('whaleInsight').innerHTML = insights.whaleInsight;
             document.getElementById('retailInsight').innerHTML = insights.retailInsight;
         }
 
@@ -1401,9 +1440,9 @@
                         </div>
                         <div class="stock-rec-info">
                             <div class="stock-rec-info-item">
-                                <div class="stock-rec-info-label">Shark NET</div>
-                                <div class="stock-rec-info-value ${item.summary.shark_net >= 0 ? 'positive' : 'negative'}">
-                                    ${item.summary.shark_net >= 0 ? '+' : ''}${item.summary.shark_net.toFixed(1)} M
+                                <div class="stock-rec-info-label">Whale NET</div>
+                                <div class="stock-rec-info-value ${item.summary.whale_net >= 0 ? 'positive' : 'negative'}">
+                                    ${item.summary.whale_net >= 0 ? '+' : ''}${item.summary.whale_net.toFixed(1)} M
                                 </div>
                             </div>
                             <div class="stock-rec-info-item">
@@ -1415,7 +1454,7 @@
                         </div>
                         <div class="stock-rec-reason">
                             ${rec.strength === 'strong' ? '🔥 Signal Kuat' : '📊 Signal Moderat'} |
-                            Shark ${rec.sharkSignal === 'bullish' ? 'akumulasi' : rec.sharkSignal === 'bearish' ? 'distribusi' : 'netral'}
+                            Whale ${rec.whaleSignal === 'bullish' ? 'akumulasi' : rec.whaleSignal === 'bearish' ? 'distribusi' : 'netral'}
                         </div>
                     </div>
                 `;
@@ -1508,9 +1547,9 @@
             buyPieChart = new Chart(buyCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Shark', 'Ritel'],
+                    labels: ['Whale', 'Ritel'],
                     datasets: [{
-                        data: [currentStock.summary.shark_buy, currentStock.summary.retail_buy],
+                        data: [currentStock.summary.whale_buy, currentStock.summary.retail_buy],
                         backgroundColor: ['#e74c3c', '#3498db'],
                         borderWidth: 0
                     }]
@@ -1534,9 +1573,9 @@
             sellPieChart = new Chart(sellCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Shark', 'Ritel'],
+                    labels: ['Whale', 'Ritel'],
                     datasets: [{
-                        data: [currentStock.summary.shark_sell, currentStock.summary.retail_sell],
+                        data: [currentStock.summary.whale_sell, currentStock.summary.retail_sell],
                         backgroundColor: ['#c0392b', '#2980b9'],
                         borderWidth: 0
                     }]
@@ -1563,8 +1602,8 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: 'Shark Cumulative',
-                            data: daily.map(d => d.shark_cum_net),
+                            label: 'Whale Cumulative',
+                            data: daily.map(d => d.whale_cum_net),
                             borderColor: '#e74c3c',
                             backgroundColor: 'rgba(231, 76, 60, 0.1)',
                             fill: true,
@@ -1605,8 +1644,8 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: 'Shark Buy Avg',
-                            data: daily.map(d => d.shark_buyavg || 0),
+                            label: 'Whale Buy Avg',
+                            data: daily.map(d => d.whale_buyavg || 0),
                             borderColor: '#e74c3c',
                             backgroundColor: 'rgba(231, 76, 60, 0.1)',
                             fill: false,
@@ -1615,8 +1654,8 @@
                             pointRadius: 3
                         },
                         {
-                            label: 'Shark Sell Avg',
-                            data: daily.map(d => d.shark_sellavg || 0),
+                            label: 'Whale Sell Avg',
+                            data: daily.map(d => d.whale_sellavg || 0),
                             borderColor: '#c0392b',
                             backgroundColor: 'rgba(192, 57, 43, 0.1)',
                             fill: false,
@@ -1676,8 +1715,8 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: 'Shark Net Lot',
-                            data: daily.map(d => d.shark_net_lot || 0),
+                            label: 'Whale Net Lot',
+                            data: daily.map(d => d.whale_net_lot || 0),
                             borderColor: '#e74c3c',
                             backgroundColor: 'rgba(231, 76, 60, 0.1)',
                             fill: true,
@@ -1754,11 +1793,11 @@
 
             // Price & Flow Chart
             const pfCtx = document.getElementById('priceFlowChart').getContext('2d');
-            let sharkCumFlow = 0;
+            let whaleCumFlow = 0;
             let retailCumFlow = 0;
-            const sharkCumulativeFlow = daily.map(d => {
-                sharkCumFlow += (d.shark_net || 0);
-                return sharkCumFlow;
+            const whaleCumulativeFlow = daily.map(d => {
+                whaleCumFlow += (d.whale_net || 0);
+                return whaleCumFlow;
             });
             const retailCumulativeFlow = daily.map(d => {
                 retailCumFlow += (d.retail_net || 0);
@@ -1771,8 +1810,8 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: 'Shark Buy Avg',
-                            data: daily.map(d => d.shark_buyavg || 0),
+                            label: 'Whale Buy Avg',
+                            data: daily.map(d => d.whale_buyavg || 0),
                             borderColor: '#e74c3c',
                             backgroundColor: 'rgba(231, 76, 60, 0.05)',
                             fill: false,
@@ -1783,8 +1822,8 @@
                             yAxisID: 'y'
                         },
                         {
-                            label: 'Shark Sell Avg',
-                            data: daily.map(d => d.shark_sellavg || 0),
+                            label: 'Whale Sell Avg',
+                            data: daily.map(d => d.whale_sellavg || 0),
                             borderColor: '#c0392b',
                             backgroundColor: 'rgba(192, 57, 43, 0.05)',
                             fill: false,
@@ -1819,8 +1858,8 @@
                             yAxisID: 'y'
                         },
                         {
-                            label: 'Shark Cum Flow',
-                            data: sharkCumulativeFlow,
+                            label: 'Whale Cum Flow',
+                            data: whaleCumulativeFlow,
                             borderColor: '#e67e22',
                             backgroundColor: 'rgba(230, 126, 34, 0.1)',
                             fill: true,
@@ -1880,11 +1919,11 @@
                                 label: function(ctx) {
                                     const idx = ctx.datasetIndex;
                                     const raw = ctx.raw;
-                                    if (idx === 0) return `Shark Buy Avg: Rp ${raw.toFixed(2)}`;
-                                    if (idx === 1) return `Shark Sell Avg: Rp ${raw.toFixed(2)}`;
+                                    if (idx === 0) return `Whale Buy Avg: Rp ${raw.toFixed(2)}`;
+                                    if (idx === 1) return `Whale Sell Avg: Rp ${raw.toFixed(2)}`;
                                     if (idx === 2) return `Ritel Buy Avg: Rp ${raw.toFixed(2)}`;
                                     if (idx === 3) return `Ritel Sell Avg: Rp ${raw.toFixed(2)}`;
-                                    if (idx === 4) return `Shark Cum Flow: ${(raw >= 0 ? '+' : '')}${raw.toFixed(2)} Miliar`;
+                                    if (idx === 4) return `Whale Cum Flow: ${(raw >= 0 ? '+' : '')}${raw.toFixed(2)} Miliar`;
                                     if (idx === 5) return `Ritel Cum Flow: ${(raw >= 0 ? '+' : '')}${raw.toFixed(2)} Miliar`;
                                     return '';
                                 }
@@ -1910,8 +1949,8 @@
             const tbody = document.getElementById('brokerTableBody');
             tbody.innerHTML = '';
             let brokers = currentStock.brokers;
-            if (filter === 'shark') {
-                brokers = brokers.filter(b => b.category === 'shark');
+            if (filter === 'whale') {
+                brokers = brokers.filter(b => b.category === 'whale');
             } else if (filter === 'retail') {
                 brokers = brokers.filter(b => b.category === 'retail');
             }
@@ -1930,7 +1969,7 @@
                         ${b.net >= 0 ? '+' : ''}Rp ${b.net.toFixed(2)} M
                     </td>
                     <td style="color:#888;">Rp ${b.total.toFixed(2)} M</td>
-                    <td><span class="badge ${b.category}">${b.category === 'shark' ? 'SHARK' : 'RITEL'}</span></td>
+                    <td><span class="badge ${b.category}">${b.category === 'whale' ? 'WHALE' : 'RITEL'}</span></td>
                 `;
                 tbody.appendChild(row);
             });
