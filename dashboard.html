@@ -1,0 +1,2349 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+<!-- Version: 1.3 -->
+<!-- Version: 3.1 - Fixed duplicate variable declarations - removed conflicting buyZone/recentAvgBuy declarations -->
+<!-- Version: 4.0 - Lamalera Theme: Shark (Paus) instead of Shark -->
+<title>Lamalera - Shark Trading Philosophy</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a14 0%, #1a1a2e 50%, #16213e 100%);
+            color: #eee;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #e74c3c, #f39c12, #3498db);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+        .stock-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .stock-selector label {
+            color: #888;
+            font-size: 1.1rem;
+        }
+        .stock-selector select {
+            padding: 12px 20px;
+            font-size: 1.1rem;
+            background: #2c3e50;
+            border: 1px solid #34495e;
+            border-radius: 10px;
+            color: #ecf0f1;
+            cursor: pointer;
+            min-width: 200px;
+        }
+        .stock-selector select:hover {
+            background: #34495e;
+        }
+        .stock-selector select option {
+            background: #2c3e50;
+            color: #ecf0f1;
+        }
+        .stock-selector select option:hover {
+            background: #34495e;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        .stat-card.shark { border-left: 3px solid #e74c3c; }
+        .stat-card.retail { border-left: 3px solid #3498db; }
+        .stat-card h3 {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .stat-card .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .stat-card .subtext {
+            color: #888;
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+        .stat-card.shark .value { color: #e74c3c; }
+        .stat-card.retail .value { color: #3498db; }
+        .positive { color: #27ae60 !important; }
+        .negative { color: #e74c3c !important; }
+        .chart-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .chart-header-row {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(52, 152, 219, 0.15));
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .stock-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fff;
+            margin: 0;
+            text-align: center;
+        }
+        .chart-container {
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .chart-container.full-width {
+            grid-column: 1 / -1;
+        }
+        .chart-container h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        .chart-wrapper {
+            height: 300px;
+        }
+        .chart-wrapper.tall {
+            height: 400px;
+        }
+        .insight-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .insight-card {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(52, 152, 219, 0.1));
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .insight-card h3 {
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+        .insight-card p {
+            color: #aaa;
+            line-height: 1.6;
+        }
+        .insight-card .highlight {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 8px;
+            border-radius: 5px;
+            color: #fff;
+        }
+        .recommendation-panel {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .recommendation-card {
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(52, 152, 219, 0.1));
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        .recommendation-card h3 {
+            margin-bottom: 15px;
+            color: #888;
+            font-size: 1rem;
+        }
+        .rec-badge {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .rec-badge.BUY {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+        .rec-badge.SELL {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+        .rec-badge.HOLD {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        }
+        .rec-reason {
+            color: #aaa;
+            line-height: 1.6;
+            margin: 15px 0;
+            font-size: 1rem;
+        }
+        .rec-signals {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .signal-item {
+            background: rgba(255,255,255,0.05);
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .signal-label {
+            display: block;
+            color: #888;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+        .signal-value {
+            display: block;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .signal-value.bullish { color: #27ae60; }
+        .signal-value.bearish { color: #e74c3c; }
+        .signal-value.neutral { color: #888; }
+        .price-rec-card {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(155, 89, 182, 0.1));
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        .price-rec-card h3 {
+            margin-bottom: 20px;
+            color: #888;
+            font-size: 1rem;
+            text-align: center;
+        }
+        .price-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .price-item {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        .price-item.buy-zone { border-color: rgba(39, 174, 96, 0.3); }
+        .price-item.sell-zone { border-color: rgba(231, 76, 60, 0.3); }
+        .price-item.target { border-color: rgba(243, 156, 18, 0.3); }
+        .price-item.stoploss { border-color: rgba(155, 89, 182, 0.3); }
+        .price-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        .price-label-sub {
+            display: block;
+            font-size: 0.7rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        .price-value {
+            display: block;
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+        .price-item.buy-zone .price-value { color: #27ae60; }
+        .price-item.sell-zone .price-value { color: #e74c3c; }
+        .price-item.target .price-value { color: #f39c12; }
+        .price-item.stoploss .price-value { color: #9b59b6; }
+        .price-info {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #3498db;
+        }
+        .price-advice-text {
+            color: #aaa;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+        /* Legend Panel Styles */
+        .legend-panel {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.08), rgba(155, 89, 182, 0.08));
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .legend-item {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .legend-item.full-width {
+            grid-column: 1 / -1;
+        }
+        .legend-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .legend-header.shark { border-color: rgba(231, 76, 60, 0.3); }
+        .legend-header.retail { border-color: rgba(52, 152, 219, 0.3); }
+        .legend-icon {
+            font-size: 1.5rem;
+        }
+        .legend-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        .legend-body {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .legend-desc {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .signal-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            white-space: nowrap;
+            min-width: 140px;
+            text-align: center;
+        }
+        .signal-badge.bullish {
+            background: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+        }
+        .signal-badge.bearish {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+        .signal-badge.neutral {
+            background: rgba(149, 165, 166, 0.2);
+            color: #95a5a6;
+        }
+        .legend-text {
+            color: #aaa;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+        .logic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .logic-item {
+            background: rgba(255,255,255,0.05);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #3498db;
+        }
+        .logic-phase {
+            display: block;
+            font-weight: 600;
+            color: #3498db;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+        .logic-desc {
+            color: #aaa;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+        .legend-note {
+            background: rgba(243, 156, 18, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border-left: 3px solid #f39c12;
+            color: #aaa;
+            font-size: 0.75rem;
+            line-height: 1.5;
+        }
+        .broker-table {
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        th {
+            background: rgba(255,255,255,0.05);
+            font-weight: 600;
+            color: #888;
+            text-size: 0.8rem;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge.shark {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+        .badge.retail {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+        }
+        .filter-group {
+            display: flex;
+            gap: 10px;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.1);
+            color: #eee;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: linear-gradient(90deg, #e74c3c, #3498db);
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin: 15px 0;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        .error-message {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid #e74c3c;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        #loadingMessage {
+            background: rgba(52, 152, 219, 0.1);
+            border: 1px solid #3498db;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        #loadingMessage p {
+            font-size: 1.1rem;
+            margin: 0;
+        }
+        .file-input-area {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .file-input-area input {
+            margin: 10px;
+        }
+        .file-input-area button {
+            padding: 10px 20px;
+            background: #3498db;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+        /* Stock Recommendation Card Styles */
+        .stock-rec-card {
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.1), rgba(46, 204, 113, 0.05));
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid rgba(39, 174, 96, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .stock-rec-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(39, 174, 96, 0.6);
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);
+        }
+        .stock-rec-card.selected {
+            border-color: #27ae60;
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.2), rgba(46, 204, 113, 0.1));
+        }
+        .stock-rec-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .stock-rec-code {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #27ae60;
+        }
+        .stock-rec-badge {
+            background: #27ae60;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .stock-rec-badge.strong {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+        }
+        .stock-rec-badge.moderate {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+        .stock-rec-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .stock-rec-info-item {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stock-rec-info-label {
+            font-size: 0.7rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        .stock-rec-info-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        .stock-rec-info-value.positive { color: #27ae60; }
+        .stock-rec-info-value.negative { color: #e74c3c; }
+        .stock-rec-reason {
+            font-size: 0.8rem;
+            color: #aaa;
+            line-height: 1.4;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .stock-rec-confidence {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+        .stock-rec-confidence.high { background: rgba(39, 174, 96, 0.3); color: #27ae60; }
+        .stock-rec-confidence.medium { background: rgba(243, 156, 18, 0.3); color: #f39c12; }
+        .stock-rec-confidence.low { background: rgba(231, 76, 60, 0.3); color: #e74c3c; }
+        @media (max-width: 768px) {
+            .chart-section { grid-template-columns: 1fr; }
+            .header h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐋 Lamalera Trading Philosophy</h1>
+            <p style="color: #888; font-size: 1rem;">Filosofi Nelayan Tradisional - Shark (Institusi) vs Retail (Ritel)</p>
+        </div>
+        <!-- Period Info -->
+        <div id="periodInfo" style="display: none; text-align: center; margin-bottom: 30px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+            <h3 style="color: #888; font-size: 0.9rem; margin-bottom: 10px;">PERIODE DATA</h3>
+            <p id="periodText" style="font-size: 1.2rem; font-weight: bold;">-</p>
+        </div>
+        <!-- Loading Message -->
+        <div id="loadingMessage" style="text-align: center; padding: 30px; color: #888;">
+            <p id="loadingText">Memuat data broker_data.json...</p>
+            <p style="font-size: 0.9rem; margin-top: 10px; color: #666;">
+                Jika data tidak termuat, pastikan file ada atau gunakan local server.<br>
+                <strong>Tip:</strong> Jalankan <code>python -m http.server 8000</code> di folder ini, lalu buka <a href="http://localhost:8000/dashboard.html" target="_blank">http://localhost:8000/dashboard.html</a>
+            </p>
+            <div style="margin-top: 20px;">
+                <label style="cursor: pointer; background: rgba(52, 152, 219, 0.2); padding: 10px 20px; border-radius: 5px; color: #3498db;">
+                    <input type="file" id="fallbackFileInput" accept=".json" style="display: none;" onchange="loadFromFile(this)">
+                    📁 Pilih file broker_data.json manual
+                </label>
+            </div>
+        </div>
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <!-- Stock Recommendations -->
+        <div id="recommendationsSection" style="display: none;">
+            <h2 style="text-align: center; color: #888; font-size: 1rem; margin-bottom: 20px;">
+                🔥 REKOMENDASI SAHAM (BUY)
+            </h2>
+            <div id="recommendationsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            </div>
+        </div>
+
+        <!-- Stock Selector -->
+        <div class="stock-selector" id="stockSelectorDiv" style="display: none;">
+            <label for="stockSelect">Pilih Saham:</label>
+            <select id="stockSelect" onchange="loadStock()">
+                <option value="">-- Pilih Saham --</option>
+            </select>
+        </div>
+        <!-- Dashboard Content -->
+        <div id="dashboardContent" style="display: none;">
+            <!-- Summary Stats -->
+            <div class="stats-grid">
+                <div class="stat-card shark">
+                    <h3>Shark BUY</h3>
+                    <div class="value" id="sharkBuy">-</div>
+                    <div class="subtext" id="sharkBuyAvg">Avg: -</div>
+                    <div class="subtext" id="sharkBuyPct">-</div>
+                </div>
+                <div class="stat-card retail">
+                    <h3>Retail BUY</h3>
+                    <div class="value" id="retailBuy">-</div>
+                    <div class="subtext" id="retailBuyAvg">Avg: -</div>
+                    <div class="subtext" id="retailBuyPct">-</div>
+                </div>
+                <div class="stat-card shark">
+                    <h3>Shark SELL</h3>
+                    <div class="value" id="sharkSell">-</div>
+                    <div class="subtext" id="sharkSellAvg">Avg: -</div>
+                    <div class="subtext" id="sharkSellPct">-</div>
+                </div>
+                <div class="stat-card retail">
+                    <h3>Retail SELL</h3>
+                    <div class="value" id="retailSell">-</div>
+                    <div class="subtext" id="retailSellAvg">Avg: -</div>
+                    <div class="subtext" id="retailSellPct">-</div>
+                </div>
+                <div class="stat-card shark">
+                    <h3>Shark NET</h3>
+                    <div class="value" id="sharkNet">-</div>
+                    <div class="subtext" id="sharkNetStatus">-</div>
+                </div>
+                <div class="stat-card retail">
+                    <h3>Retail NET</h3>
+                    <div class="value" id="retailNet">-</div>
+                    <div class="subtext" id="retailNetStatus">-</div>
+                </div>
+                <div class="stat-card shark">
+                    <h3>Shark Kepemilikan</h3>
+                    <div class="value" id="sharkOwnership">-</div>
+                    <div class="subtext" id="sharkOwnershipLot">Net Lot</div>
+                </div>
+                <div class="stat-card retail">
+                    <h3>Retail Kepemilikan</h3>
+                    <div class="value" id="retailOwnership">-</div>
+                    <div class="subtext" id="retailOwnershipLot">Net Lot</div>
+                </div>
+            </div>
+            <!-- Recommendation Panel -->
+            <div class="recommendation-panel">
+                <div class="recommendation-card">
+                    <h3>Rekomendasi Trading</h3>
+                    <div id="recommendationBadge" class="rec-badge HOLD">HOLD</div>
+                    <p id="recommendationReason" class="rec-reason">Memuat rekomendasi...</p>
+                    <div class="rec-signals">
+                        <div class="signal-item">
+                            <span class="signal-label">Signal Shark:</span>
+                            <span id="sharkSignal" class="signal-value">-</span>
+                        </div>
+                        <div class="signal-item">
+                            <span class="signal-label">Signal Retail:</span>
+                            <span id="retailSignal" class="signal-value">-</span>
+                        </div>
+                        <div class="signal-item">
+                            <span class="signal-label">Tren Harga:</span>
+                            <span id="priceTrend" class="signal-value">-</span>
+                        </div>
+                        <div class="signal-item">
+                            <span class="signal-label">Strength:</span>
+                            <span id="signalStrength" class="signal-value">-</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Price Recommendation Card -->
+                <div class="price-rec-card">
+                    <h3>Rekomendasi Harga</h3>
+                    <div class="price-grid">
+                        <div class="price-item buy-zone">
+                            <span class="price-label">AREA BELI</span>
+                            <span class="price-label-sub">Support / Buy Zone</span>
+                            <span id="buyZone" class="price-value">-</span>
+                        </div>
+                        <div class="price-item target">
+                            <span class="price-label">TARGET</span>
+                            <span class="price-label-sub">Take Profit</span>
+                            <span id="targetPrice" class="price-value">-</span>
+                        </div>
+                        <div class="price-item sell-zone">
+                            <span class="price-label">AREA JUAL</span>
+                            <span class="price-label-sub">Resistance / Sell Zone</span>
+                            <span id="sellZone" class="price-value">-</span>
+                        </div>
+                        <div class="price-item stoploss">
+                            <span class="price-label">STOP LOSS</span>
+                            <span class="price-label-sub">Cut Loss Point</span>
+                            <span id="stopLoss" class="price-value">-</span>
+                        </div>
+                    </div>
+                    <div class="price-info">
+                        <p id="priceAdvice" class="price-advice-text">Memuat saran harga...</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Charts Row 6 - Price & Flow Chart -->
+            <div class="chart-section">
+                <div class="chart-header-row">
+                    <h2 class="stock-title" id="chartStockTitle6">BUMI - Harga Rata-rata & Cumulative Flow</h2>
+                </div>
+                <div class="chart-container full-width">
+                    <h2>Harga Rata-rata Beli/Jual & Cumulative Net Flow (Shark + Ritel)</h2>
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Shark Buy Avg</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #c0392b;"></div>Shark Sell Avg</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #3498db;"></div>Ritel Buy Avg</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #2980b9;"></div>Ritel Sell Avg</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #e67e22; border: 2px solid #d35400;"></div>Shark Cum Flow</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #27ae60; border: 2px solid #1e8449;"></div>Ritel Cum Flow</div>
+                    </div>
+                    <div class="chart-wrapper tall">
+                        <canvas id="priceFlowChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Signal Legend Panel -->
+            <div class="legend-panel">
+                <h2 style="color: #888; font-size: 1rem; margin-bottom: 15px;">📖 Panduan Signal</h2>
+                <div class="legend-grid">
+                    <!-- Shark Signal Legend -->
+                    <div class="legend-item">
+                        <div class="legend-header shark">
+                            <span class="legend-icon">🐋</span>
+                            <span class="legend-title">Signal Shark (Institusi)</span>
+                        </div>
+                        <div class="legend-body">
+                            <div class="legend-desc">
+                                <span class="signal-badge bullish">Bullish (Akumulasi)</span>
+                                <span class="legend-text">Shark sedang BELI (akumulasi) → Harga potensial NAIK</span>
+                            </div>
+                            <div class="legend-desc">
+                                <span class="signal-badge bearish">Bearish (Distribusi)</span>
+                                <span class="legend-text">Shark sedang JUAL (take profit) → Harga potensial TURUN</span>
+                            </div>
+                            <div class="legend-desc">
+                                <span class="signal-badge neutral">Netral (Sideways)</span>
+                                <span class="legend-text">Shark tidak ada aktivitas signifikan</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Retail Signal Legend -->
+                    <div class="legend-item">
+                        <div class="legend-header retail">
+                            <span class="legend-icon">👥</span>
+                            <span class="legend-title">Signal Retail (Kontrarian)</span>
+                        </div>
+                        <div class="legend-body">
+                            <div class="legend-desc">
+                                <span class="signal-badge bullish">Bullish (Kontrarian)</span>
+                                <span class="legend-text">Retail panic SELL (takut) → Saat BELI yang bagus</span>
+                            </div>
+                            <div class="legend-desc">
+                                <span class="signal-badge bullish">Bullish (Akumulasi)</span>
+                                <span class="legend-text">Retail beli moderat (1-5 M) → Minat fishermen normal</span>
+                            </div>
+                            <div class="legend-desc">
+                                <span class="signal-badge bearish">Bearish (Euforia = Top)</span>
+                                <span class="legend-text">Retail FOMO beli BANYAK (>5 M) → Tanda TOP, hati-hati!</span>
+                            </div>
+                            <div class="legend-desc">
+                                <span class="signal-badge bearish">Bearish (Distribusi)</span>
+                                <span class="legend-text">Retail distribusi (jual) → Profit taking fishermen</span>
+                            </div>
+                            <div class="legend-desc">
+                                <span class="signal-badge neutral">Netral (Sideways)</span>
+                                <span class="legend-text">Retail tidak ada aktivitas signifikan</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Trading Logic -->
+                    <div class="legend-item full-width">
+                        <div class="legend-header">
+                            <span class="legend-icon">💡</span>
+                            <span class="legend-title">Logika Trading (Smart Money vs Dumb Money)</span>
+                        </div>
+                        <div class="legend-body">
+                            <div class="logic-grid">
+                                <div class="logic-item">
+                                    <span class="logic-phase">Fase Akumulasi</span>
+                                    <span class="logic-desc">Shark BELI, Retail JUAL (takut) → Signal <strong>BUY</strong></span>
+                                </div>
+                                <div class="logic-item">
+                                    <span class="logic-phase">Fase Distribusi</span>
+                                    <span class="logic-desc">Shark JUAL, Retail BELI (euforia) → Signal <strong>SELL</strong></span>
+                                </div>
+                            </div>
+                            <div class="legend-note">
+                                <strong>Threshold VALUE (dalam Miliar Rupiah):</strong><br>
+                                • Kuat: > 5 Miliar | • Moderat: > 1 Miliar | • Netral: ± 1 Miliar
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Insight Panel -->
+            <div class="insight-panel">
+                <div class="insight-card">
+                    <h3>Analisis Shark</h3>
+                    <p id="sharkInsight">Memuat analisis...</p>
+                </div>
+                <div class="insight-card">
+                    <h3>Analisis Retail</h3>
+                    <p id="retailInsight">Memuat analisis...</p>
+                </div>
+            </div>
+            <!-- Charts Row 1 -->
+            <div class="chart-section">
+                <div class="chart-header-row">
+                    <h2 class="stock-title" id="chartStockTitle1">BUMI - Komposisi Trading</h2>
+                </div>
+                <div class="chart-container">
+                    <h2>Komposisi BUY</h2>
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Shark</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #3498db;"></div>Ritel</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="buyPieChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h2>Komposisi SELL</h2>
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background: #c0392b;"></div>Shark</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #2980b9;"></div>Ritel</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="sellPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Charts Row 2 -->
+            <div class="chart-section">
+                <div class="chart-header-row">
+                    <h2 class="stock-title" id="chartStockTitle2">BUMI - Cumulative Net Flow</h2>
+                </div>
+                <div class="chart-container full-width">
+                    <h2>Cumulative Net Flow (Akumulasi)</h2>
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Shark</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #3498db;"></div>Ritel</div>
+                    </div>
+                    <div class="chart-wrapper tall">
+                        <canvas id="cumulativeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Charts Row 3 -->
+            <div class="chart-section">
+                <div class="chart-header-row">
+                    <h2 class="stock-title" id="chartStockTitle3">BUMI - Rata-rata Harga</h2>
+                </div>
+                <div class="chart-container full-width">
+                    <h2>Rata-rata Harga Shark & Ritel per Hari</h2>
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Shark Buy Avg</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #c0392b;"></div>Shark Sell Avg</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #3498db;"></div>Ritel Buy Avg</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #2980b9;"></div>Ritel Sell Avg</div>
+                    </div>
+                    <div class="chart-wrapper tall">
+                        <canvas id="avgPriceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Charts Row 4 -->
+            <div class="chart-section">
+                <div class="chart-header-row">
+                    <h2 class="stock-title" id="chartStockTitle4">BUMI - Kepemilikan Saham</h2>
+                </div>
+                <div class="chart-container full-width">
+                    <h2>Kepemilikan Saham (Net Lot) - Akumulasi</h2>
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>Shark Net Lot</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #3498db;"></div>Ritel Net Lot</div>
+                    </div>
+                    <div class="chart-wrapper tall">
+                        <canvas id="ownershipChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Charts Row 5 -->
+            <div class="chart-section">
+                <div class="chart-header-row">
+                    <h2 class="stock-title" id="chartStockTitle5">BUMI - Top Broker</h2>
+                </div>
+                <div class="chart-container full-width">
+                    <h2>Top 15 Brokers by Volume</h2>
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background: #27ae60;"></div>BUY</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div>SELL</div>
+                    </div>
+                    <div class="chart-wrapper tall">
+                        <canvas id="topBrokersChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Broker Table -->
+            <div class="broker-table">
+                <div class="table-controls">
+                    <h3>Daftar Broker</h3>
+                    <div class="filter-group">
+                        <button class="filter-btn active" onclick="filterTable('all')">Semua</button>
+                        <button class="filter-btn" onclick="filterTable('shark')">Shark Only</button>
+                        <button class="filter-btn" onclick="filterTable('retail')">Ritel Only</button>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Kode</th>
+                            <th>Nama Broker</th>
+                            <th>BUY</th>
+                            <th>BUY Avg</th>
+                            <th>SELL</th>
+                            <th>SELL Avg</th>
+                            <th>NET</th>
+                            <th>Total</th>
+                            <th>Kategori</th>
+                        </tr>
+                    </thead>
+                    <tbody id="brokerTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div style="text-align: center; padding: 30px; color: #666; margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <p>🐋 Lamalera - Shark Trading Philosophy</p>
+            <p style="margin-top: 10px; font-size: 0.9rem;">Lamalera Trading Philosophy | Inspired by Traditional Shark Hunters of Lembata, NTT</p>
+        </div>
+    </div>
+    <script>
+        let allData = null;
+        let currentStock = null;
+        let buyPieChart = null;
+        let sellPieChart = null;
+        let cumulativeChart = null;
+        let avgPriceChart = null;
+        let ownershipChart = null;
+        let topBrokersChart = null;
+        let priceFlowChart = null;
+        // Auto-load JSON on page load
+        async function loadData() {
+            try {
+                const response = await fetch('broker_data.json');
+                if (!response.ok) {
+                    throw new Error('File tidak ditemukan');
+                }
+                allData = await response.json();
+                showError('');
+                document.getElementById('loadingMessage').style.display = 'none';
+                populateStockSelect();
+            } catch (error) {
+                // Fetch failed, show fallback option
+                document.getElementById('loadingText').textContent = 'Auto-load gagal (CORS restriction). Gunakan salah satu cara di bawah:';
+            }
+        }
+        // Fallback: Load from file input
+        function loadFromFile(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        allData = JSON.parse(e.target.result);
+                        showError('');
+                        document.getElementById('loadingMessage').style.display = 'none';
+                        populateStockSelect();
+                    } catch (error) {
+                        showError('Error parsing JSON: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            if (message) {
+                errorEl.textContent = message;
+                errorEl.style.display = 'block';
+            } else {
+                errorEl.style.display = 'none';
+            }
+        }
+
+        // ===== CALCULATE SINGLE STOCK RECOMMENDATION =====
+        function calculateStockRecommendation(stockCode) {
+            const stock = allData.stocks[stockCode];
+            if (!stock) return null;
+
+            const s = stock.summary;
+            const daily = stock.daily;
+            const days = daily.length;
+
+            // Shark brokers definition
+            const SHARK_BROKERS = ['AK','CC','BK','GW','AI','KZ','DX','DD','RX','KK','CG','DR','TP','SQ','NI','CD','OD'];
+
+            // Calculate signals
+            let score = 0;
+            let sharkSignal = 'neutral';
+            let retailSignal = 'neutral';
+            let priceTrend = 'neutral';
+            let strength = 'weak';
+
+            // Signal 1: Shark accumulation
+            const whaleNet = s.shark_net || 0;
+            if (whaleNet > 5) {
+                sharkSignal = 'bullish';
+                score += 2;
+            } else if (whaleNet > 1) {
+                sharkSignal = 'bullish';
+                score += 1;
+            } else if (whaleNet < -5) {
+                sharkSignal = 'bearish';
+                score -= 2;
+            } else if (whaleNet < -1) {
+                sharkSignal = 'bearish';
+                score -= 1;
+            }
+
+            // Signal 2: Retail behavior (contrarian)
+            const fishermenNet = s.retail_net || 0;
+            if (fishermenNet < -5) {
+                retailSignal = 'bullish';
+                score += 1;
+            } else if (fishermenNet > 5) {
+                retailSignal = 'bearish';
+                score -= 1;
+            } else if (fishermenNet > 1) {
+                retailSignal = 'bullish';
+                score += 0.5;
+            }
+
+            // Signal 3: Price trend
+            const recent5Days = daily.slice(-5);
+            const avgRecentBuy = recent5Days.reduce((a, b) => a + (b.shark_buyavg || 0), 0) / 5;
+            const overallAvgBuy = s.shark_buyavg || 0;
+            if (avgRecentBuy > overallAvgBuy * 1.02) {
+                priceTrend = 'up';
+                score += 0.5;
+            } else if (avgRecentBuy < overallAvgBuy * 0.98) {
+                priceTrend = 'down';
+                score -= 0.5;
+            }
+
+            // Determine strength
+            if (Math.abs(score) >= 3) strength = 'strong';
+            else if (Math.abs(score) >= 1.5) strength = 'moderate';
+
+            // Final recommendation
+            let recommendation = 'HOLD';
+            if (score >= 2.5) recommendation = 'BUY';
+            else if (score >= 1) recommendation = 'BUY';
+            else if (score <= -2.5) recommendation = 'SELL';
+            else if (score <= -1) recommendation = 'SELL';
+
+            return {
+                code: stockCode,
+                recommendation: recommendation,
+                score: score,
+                whaleNet: whaleNet,
+                fishermenNet: fishermenNet,
+                sharkSignal: sharkSignal,
+                priceTrend: priceTrend,
+                strength: strength,
+                summary: s
+            };
+        }
+
+        // ===== GET ALL RECOMMENDATIONS =====
+        function getAllRecommendations() {
+            const recommendations = [];
+            Object.keys(allData.stocks).forEach(code => {
+                const rec = calculateStockRecommendation(code);
+                if (rec) {
+                    recommendations.push(rec);
+                }
+            });
+
+            // Sort by score (highest first) and filter BUY
+            const buyRecommendations = recommendations
+                .filter(r => r.recommendation === 'BUY')
+                .sort((a, b) => b.score - a.score);
+
+            return {
+                all: recommendations,
+                buy: buyRecommendations,
+                buyCount: buyRecommendations.length,
+                totalCount: recommendations.length
+            };
+        }
+
+        // ===== RENDER RECOMMENDATION CARDS =====
+        function renderRecommendations() {
+            const container = document.getElementById('recommendationsList');
+            const section = document.getElementById('recommendationsSection');
+
+            const recs = getAllRecommendations();
+
+            if (recs.buyCount === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            // Show top 6 BUY recommendations
+            const topBuy = recs.buy.slice(0, 6);
+
+            container.innerHTML = topBuy.map(rec => {
+                const strengthClass = rec.strength === 'strong' ? 'strong' : 'moderate';
+                const confidenceLevel = rec.score >= 3 ? 'high' : rec.score >= 1.5 ? 'medium' : 'low';
+                const confidenceText = confidenceLevel === 'high' ? 'TINGGI' : confidenceLevel === 'medium' ? 'SEDANG' : 'RENDAH';
+
+                return `
+                    <div class="stock-rec-card" onclick="selectStockFromRec('${rec.code}')">
+                        <div class="stock-rec-confidence ${confidenceLevel}">${confidenceText}</div>
+                        <div class="stock-rec-header">
+                            <div class="stock-rec-code">${rec.code}</div>
+                            <div class="stock-rec-badge ${strengthClass}">${rec.recommendation}</div>
+                        </div>
+                        <div class="stock-rec-info">
+                            <div class="stock-rec-info-item">
+                                <div class="stock-rec-info-label">Shark NET</div>
+                                <div class="stock-rec-info-value ${rec.whaleNet >= 0 ? 'positive' : 'negative'}">
+                                    ${rec.whaleNet >= 0 ? '+' : ''}${rec.whaleNet.toFixed(1)} M
+                                </div>
+                            </div>
+                            <div class="stock-rec-info-item">
+                                <div class="stock-rec-info-label">Trend</div>
+                                <div class="stock-rec-info-value">
+                                    ${rec.priceTrend === 'up' ? '📈 Naik' : rec.priceTrend === 'down' ? '📉 Turun' : '➡️ Sideways'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stock-rec-reason">
+                            ${rec.strength === 'strong' ? '🔥 Signal Kuat' : '📊 Signal Moderat'} |
+                            Shark ${rec.sharkSignal === 'bullish' ? 'akumulasi' : 'bearish' ? 'distribusi' : 'netral'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            section.style.display = 'block';
+        }
+
+        // ===== SELECT STOCK FROM RECOMMENDATION =====
+        function selectStockFromRec(stockCode) {
+            const select = document.getElementById('stockSelect');
+            select.value = stockCode;
+            loadStock();
+
+            // Scroll to dashboard
+            document.getElementById('dashboardContent').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function populateStockSelect() {
+            const select = document.getElementById('stockSelect');
+            select.innerHTML = '<option value="">-- Pilih Saham --</option>';
+            const stocks = Object.keys(allData.stocks).sort();
+            stocks.forEach(code => {
+                const option = document.createElement('option');
+                option.value = code;
+                option.textContent = code;
+                select.appendChild(option);
+            });
+            document.getElementById('stockSelectorDiv').style.display = 'flex';
+
+            // Render recommendation cards
+            renderRecommendations();
+
+            // Auto-select first stock or first BUY recommendation
+            const recs = getAllRecommendations();
+            if (recs.buyCount > 0) {
+                select.value = recs.buy[0].code;
+                loadStock();
+            } else if (stocks.length > 0) {
+                select.value = stocks[0];
+                loadStock();
+            }
+        }
+        function loadStock() {
+            const stockCode = document.getElementById('stockSelect').value;
+            if (!stockCode || !allData.stocks[stockCode]) {
+                return;
+            }
+            currentStock = allData.stocks[stockCode];
+            document.getElementById('dashboardContent').style.display = 'block';
+            // Update period info
+            const periodInfo = document.getElementById('periodInfo');
+            const periodText = document.getElementById('periodText');
+            periodInfo.style.display = 'block';
+            periodText.textContent = `${currentStock.date_start} s/d ${currentStock.date_end} (${currentStock.daily.length} hari trading)`;
+            // Update chart stock titles
+            document.getElementById('chartStockTitle1').textContent = `${stockCode} - Komposisi Trading`;
+            document.getElementById('chartStockTitle2').textContent = `${stockCode} - Cumulative Net Flow`;
+            document.getElementById('chartStockTitle3').textContent = `${stockCode} - Rata-rata Harga`;
+            document.getElementById('chartStockTitle4').textContent = `${stockCode} - Kepemilikan Saham`;
+            document.getElementById('chartStockTitle5').textContent = `${stockCode} - Top Broker`;
+            document.getElementById('chartStockTitle6').textContent = `${stockCode} - Harga & Net Flow`;
+            updateSummary();
+            updateInsights();
+            generateRecommendation();
+            createCharts();
+            populateTable();
+        }
+        function updateSummary() {
+            const s = currentStock.summary;
+            const totalBuy = s.total_buy;
+            const totalSell = s.total_sell;
+            document.getElementById('sharkBuy').textContent = `Rp ${s.shark_buy} T`;
+            document.getElementById('sharkBuyAvg').textContent = `Avg: Rp ${s.shark_buyavg}`;
+            document.getElementById('sharkBuyPct').textContent = `${((s.shark_buy / totalBuy) * 100).toFixed(0)}% dari total`;
+            document.getElementById('retailBuy').textContent = `Rp ${s.retail_buy} T`;
+            document.getElementById('retailBuyAvg').textContent = `Avg: Rp ${s.retail_buyavg}`;
+            document.getElementById('retailBuyPct').textContent = `${((s.retail_buy / totalBuy) * 100).toFixed(0)}% dari total`;
+            document.getElementById('sharkSell').textContent = `Rp ${s.shark_sell} T`;
+            document.getElementById('sharkSellAvg').textContent = `Avg: Rp ${s.shark_sellavg}`;
+            document.getElementById('sharkSellPct').textContent = `${((s.shark_sell / totalSell) * 100).toFixed(0)}% dari total`;
+            document.getElementById('retailSell').textContent = `Rp ${s.retail_sell} T`;
+            document.getElementById('retailSellAvg').textContent = `Avg: Rp ${s.retail_sellavg}`;
+            document.getElementById('retailSellPct').textContent = `${((s.retail_sell / totalSell) * 100).toFixed(0)}% dari total`;
+            const whaleNetEl = document.getElementById('sharkNet');
+            whaleNetEl.textContent = `${s.shark_net >= 0 ? '+' : ''}Rp ${Math.abs(s.shark_net)} M`;
+            whaleNetEl.className = 'value ' + (s.shark_net >= 0 ? 'positive' : 'negative');
+            document.getElementById('sharkNetStatus').textContent = s.shark_net >= 0 ? 'AKUMULASI/BELI' : 'DISTRIBUSI/JUAL';
+            const fishermenNetEl = document.getElementById('retailNet');
+            fishermenNetEl.textContent = `${s.retail_net >= 0 ? '+' : ''}Rp ${Math.abs(s.retail_net)} M`;
+            fishermenNetEl.className = 'value ' + (s.retail_net >= 0 ? 'positive' : 'negative');
+            document.getElementById('retailNetStatus').textContent = s.retail_net >= 0 ? 'AKUMULASI/BELI' : 'DISTRIBUSI/JUAL';
+            // Ownership (Net VALUE in Millions/Billions)
+            const sharkOwnEl = document.getElementById('sharkOwnership');
+            sharkOwnEl.textContent = `${(s.shark_net >= 0 ? '+' : '')}Rp ${Math.abs(s.shark_net).toFixed(1)} M`;
+            sharkOwnEl.className = 'value ' + (s.shark_net >= 0 ? 'positive' : 'negative');
+            document.getElementById('sharkOwnershipLot').textContent = `${(s.shark_net >= 0 ? '+' : '')}Rp ${Math.abs(s.shark_net).toFixed(1)} Miliar`;
+            const retailOwnEl = document.getElementById('retailOwnership');
+            retailOwnEl.textContent = `${(s.retail_net >= 0 ? '+' : '')}Rp ${Math.abs(s.retail_net).toFixed(1)} M`;
+            retailOwnEl.className = 'value ' + (s.retail_net >= 0 ? 'positive' : 'negative');
+            document.getElementById('retailOwnershipLot').textContent = `${(s.retail_net >= 0 ? '+' : '')}Rp ${Math.abs(s.retail_net).toFixed(1)} Miliar`;
+        }
+        function updateInsights() {
+            const s = currentStock.summary;
+            const days = currentStock.daily.length;
+            let sharkPeak = -Infinity, sharkPeakDay = 0;
+            let retailPeak = -Infinity, retailPeakDay = 0;
+            currentStock.daily.forEach(d => {
+                if (d.shark_cum_net > sharkPeak) {
+                    sharkPeak = d.shark_cum_net;
+                    sharkPeakDay = d.day;
+                }
+                if (d.retail_cum_net > retailPeak) {
+                    retailPeak = d.retail_cum_net;
+                    retailPeakDay = d.day;
+                }
+            });
+            let whaleInsight = '';
+            // Gunakan VALUE (Miliar Rupiah) untuk konsistensi dengan recommendation signal
+            const whaleNet = s.shark_net || 0;
+            const fishermenNet = s.retail_net || 0;
+            if (whaleNet < 0) {
+                whaleInsight = `Shark melakukan <span class="highlight">DISTRIBUSI</span> sebesar <span class="highlight">Rp ${Math.abs(whaleNet).toFixed(1)} Miliar</span> dalam ${days} hari transaksi. `;
+                if (sharkPeakDay > 0) {
+                    whaleInsight += `Puncak akumulasi tercapai di hari ke-${sharkPeakDay} (+${sharkPeak.toFixed(1)} M), setelah itu mulai distribusi bertahap. `;
+                }
+                whaleInsight += `Ini mengindikasikan <span class="highlight">take profit</span> oleh institusi besar.`;
+            } else {
+                whaleInsight = `Shark melakukan <span class="highlight">AKUMULASI</span> sebesar <span class="highlight">Rp ${whaleNet.toFixed(1)} Miliar</span> dalam ${days} hari transaksi. Institusi sedang membeli saham ini.`;
+            }
+            document.getElementById('sharkInsight').innerHTML = whaleInsight;
+            let fishermenInsight = '';
+            // Gunakan VALUE untuk konsistensi dengan recommendation signal
+            if (fishermenNet > 0) {
+                fishermenInsight = `Retail melakukan <span class="highlight">AKUMULASI</span> sebesar <span class="highlight">Rp ${fishermenNet.toFixed(1)} Miliar</span> dalam ${days} hari transaksi. `;
+                if (retailPeakDay > 0) {
+                    fishermenInsight += `Puncak akumulasi di hari ke-${retailPeakDay} (+${retailPeak.toFixed(1)} M). `;
+                }
+                fishermenInsight += `Ini menunjukkan minat beli yang kuat dari investor fishermen.`;
+            } else {
+                fishermenInsight = `Retail melakukan <span class="highlight">DISTRIBUSI</span> sebesar <span class="highlight">Rp ${Math.abs(fishermenNet).toFixed(1)} Miliar</span> dalam ${days} hari transaksi. Investor fishermen sedang profit taking.`;
+            }
+            document.getElementById('retailInsight').innerHTML = fishermenInsight;
+        }
+        function generateRecommendation() {
+            const s = currentStock.summary;
+            const daily = currentStock.daily;
+            const days = daily.length;
+            // Calculate signals
+            let score = 0;
+            let signals = [];
+            let sharkSignal = 'neutral';
+            let retailSignal = 'neutral';
+            let priceTrend = 'neutral';
+            let strength = 'weak';
+            // Signal 1: Shark accumulation/distribution (VALUE in Billions)
+            const whaleNet = s.shark_net || 0;
+            if (whaleNet > 5) {
+                sharkSignal = 'bullish';
+                score += 2;
+                signals.push('Shark sedang akumulasi kuat');
+            } else if (whaleNet > 1) {
+                sharkSignal = 'bullish';
+                score += 1;
+                signals.push('Shark sedang akumulasi moderat');
+            } else if (whaleNet < -5) {
+                sharkSignal = 'bearish';
+                score -= 2;
+                signals.push('Shark sedang distribusi kuat');
+            } else if (whaleNet < -1) {
+                sharkSignal = 'bearish';
+                score -= 1;
+                signals.push('Shark sedang distribusi moderat');
+            } else {
+                signals.push('Shark netral/sideways');
+            }
+            // Signal 2: Retail behavior (contrarian indicator - VALUE in Billions)
+            const fishermenNet = s.retail_net || 0;
+            let retailBullishReason = ''; // Track WHY retail is bullish
+            let retailBearishReason = ''; // Track WHY retail is bearish
+            if (fishermenNet < -5) {
+                // Panic selling = kontrarian bullish
+                retailSignal = 'bullish';
+                retailBullishReason = 'kontrarian';
+                score += 1;
+                signals.push('Retail panic selling (kontrarian bullish)');
+            } else if (fishermenNet < -1) {
+                // Retail distribusi = bearish
+                retailSignal = 'bearish';
+                retailBearishReason = 'distribusi';
+                score -= 0.5;
+                signals.push('Retail distribusi');
+            } else if (fishermenNet > 5) {
+                // Euforia/akumulasi berlebih = tanda top = bearish
+                retailSignal = 'bearish';
+                retailBearishReason = 'euforia';
+                score -= 1;
+                signals.push('Retail euforia/akumulasi berlebih (tanda top)');
+            } else if (fishermenNet > 1) {
+                // Akumulasi fishermen biasa = bullish (tapi lemah)
+                retailSignal = 'bullish';
+                retailBullishReason = 'akumulasi';
+                score += 0.5;
+                signals.push('Retail akumulasi biasa');
+            } else {
+                // Netral (-1 s/d +1 Miliar) = no clear signal
+                retailSignal = 'neutral';
+                signals.push('Retail netral (sideways)');
+            }
+            // Signal 3: Price trend (recent 5 days vs overall)
+            const recent5Days = daily.slice(-5);
+            const avgRecentBuy = recent5Days.reduce((a, b) => a + (b.shark_buyavg || 0), 0) / 5;
+            const overallAvgBuy = s.shark_buyavg || 0;
+            if (avgRecentBuy > overallAvgBuy * 1.02) {
+                priceTrend = 'up';
+                score += 0.5;
+                signals.push('Tren harga naik (5 hari terakhir)');
+            } else if (avgRecentBuy < overallAvgBuy * 0.98) {
+                priceTrend = 'down';
+                score -= 0.5;
+                signals.push('Tren harga turun (5 hari terakhir)');
+            } else {
+                signals.push('Tren harga stabil/sideways');
+            }
+            // Signal 4: Shark pricing behavior
+            const avgBuy = s.shark_buyavg || 0;
+            const avgSell = s.shark_sellavg || 0;
+            if (avgSell > avgBuy * 1.05) {
+                score += 1;
+                signals.push('Shark jual di harga lebih tinggi (take profit)');
+            } else if (avgSell < avgBuy * 0.95) {
+                score -= 1;
+                signals.push('Shark jual di harga lebih rendah (cut loss)');
+            }
+            // Determine strength
+            if (Math.abs(score) >= 3) {
+                strength = 'strong';
+            } else if (Math.abs(score) >= 1.5) {
+                strength = 'moderate';
+            } else {
+                strength = 'weak';
+            }
+            // Final recommendation
+            let recommendation = 'HOLD';
+            let reason = '';
+            let badgeClass = 'HOLD';
+            if (score >= 2.5) {
+                recommendation = 'BUY';
+                badgeClass = 'BUY';
+                reason = 'Signal bullish kuat. ' + signals.join('. ');
+            } else if (score >= 1) {
+                recommendation = 'BUY';
+                badgeClass = 'BUY';
+                reason = 'Signal bullish moderat. ' + signals.join('. ');
+            } else if (score <= -2.5) {
+                recommendation = 'SELL';
+                badgeClass = 'SELL';
+                reason = 'Signal bearish kuat. ' + signals.join('. ');
+            } else if (score <= -1) {
+                recommendation = 'SELL';
+                badgeClass = 'SELL';
+                reason = 'Signal bearish moderat. ' + signals.join('. ');
+            } else {
+                reason = 'Signal campuran/netral. ' + signals.join('. ');
+            }
+            // Update UI
+            const badge = document.getElementById('recommendationBadge');
+            badge.textContent = recommendation;
+            badge.className = 'rec-badge ' + badgeClass;
+            document.getElementById('recommendationReason').textContent = reason;
+            // Update signals
+            const sharkSignalEl = document.getElementById('sharkSignal');
+            sharkSignalEl.textContent = sharkSignal === 'bullish' ? 'Bullish (Akumulasi)' :
+                                           sharkSignal === 'bearish' ? 'Bearish (Distribusi)' : 'Netral';
+            sharkSignalEl.className = 'signal-value ' + sharkSignal;
+            const retailSignalEl = document.getElementById('retailSignal');
+            // Show different text based on WHY retail is bullish/bearish
+            if (retailSignal === 'bullish') {
+                if (retailBullishReason === 'kontrarian') {
+                    retailSignalEl.textContent = 'Bullish (Kontrarian)';
+                } else if (retailBullishReason === 'akumulasi') {
+                    retailSignalEl.textContent = 'Bullish (Akumulasi)';
+                } else {
+                    retailSignalEl.textContent = 'Bullish';
+                }
+            } else if (retailSignal === 'bearish') {
+                if (retailBearishReason === 'euforia') {
+                    retailSignalEl.textContent = 'Bearish (Euforia = Top)';
+                } else if (retailBearishReason === 'distribusi') {
+                    retailSignalEl.textContent = 'Bearish (Distribusi)';
+                } else {
+                    retailSignalEl.textContent = 'Bearish';
+                }
+            } else if (retailSignal === 'neutral') {
+                retailSignalEl.textContent = 'Netral (Sideways)';
+            } else {
+                retailSignalEl.textContent = 'Netral';
+            }
+            retailSignalEl.className = 'signal-value ' + retailSignal;
+            const priceTrendEl = document.getElementById('priceTrend');
+            priceTrendEl.textContent = priceTrend === 'up' ? 'Naik ↑' :
+                                         priceTrend === 'down' ? 'Turun ↓' : 'Netral →';
+            priceTrendEl.className = 'signal-value ' + (priceTrend === 'up' ? 'bullish' : priceTrend === 'down' ? 'bearish' : 'neutral');
+            const strengthEl = document.getElementById('signalStrength');
+            strengthEl.textContent = strength === 'strong' ? 'Kuat' :
+                                  strength === 'moderate' ? 'Sedang' : 'Lemah';
+            strengthEl.className = 'signal-value ' + (strength === 'strong' ? 'bullish' : strength === 'moderate' ? 'neutral' : 'bearish');
+        // ===== IMPROVED PRICE RECOMMENDATIONS SYSTEM v2.0 WITH BEI TICK SIZE =====
+
+              // ===== BEI TICK SIZE FUNCTIONS =====
+              /**
+               * Get BEI tick size based on price range
+               * Sesuai Peraturan BEI No. I-A tentang Fraksi Harga
+               */
+              function getBEITickSize(price) {
+                  if (price <= 200) return 1;
+                  if (price <= 500) return 2;
+                  if (price <= 2000) return 5;
+                  if (price <= 5000) return 10;
+                  if (price <= 10000) return 25;
+                  if (price <= 25000) return 50;
+                  return 100;
+              }
+
+              /**
+               * Round price to nearest tick
+               * roundDown: true untuk buy (bulatkan ke bawah), false untuk sell (bulatkan ke atas)
+               */
+              function roundToBEITick(price, roundDown = true) {
+                  const tick = getBEITickSize(price);
+                  const rounded = roundDown
+                      ? Math.floor(price / tick) * tick
+                      : Math.ceil(price / tick) * tick;
+                  return Math.max(rounded, tick); // Minimum 1 tick
+              }
+
+              /**
+               * Round price with safety margin
+               * For buy zone: round down (more favorable entry)
+               * For sell/target/stop: round up (more conservative exit)
+               */
+              function roundPriceByPurpose(price, purpose) {
+                  switch(purpose) {
+                      case 'buy':      return roundToBEITick(price, true);   // Round down
+                      case 'target':   return roundToBEITick(price, false);  // Round up
+                      case 'sell':     return roundToBEITick(price, false);  // Round up
+                      case 'stoploss': return roundToBEITick(price, true);   // Round down (wider)
+                      default:         return roundToBEITick(price, true);
+                  }
+              }
+
+              // Get price data from daily averages
+              const allBuyAvgs = daily.map(d => d.shark_buyavg || 0).filter(v => v > 0);
+              const allSellAvgs = daily.map(d => d.shark_sellavg || 0).filter(v => v > 0);
+
+              if (allBuyAvgs.length === 0 || allSellAvgs.length === 0) {
+                  // Fallback if no price data
+                  document.getElementById('buyZone').textContent = 'N/A';
+                  document.getElementById('targetPrice').textContent = 'N/A';
+                  document.getElementById('sellZone').textContent = 'N/A';
+                  document.getElementById('stopLoss').textContent = 'N/A';
+                  document.getElementById('priceAdvice').innerHTML = '⚠️ Data harga tidak tersedia.';
+                  return;
+              }
+
+              const minPrice = Math.min(...allBuyAvgs, ...allSellAvgs);
+              const maxPrice = Math.max(...allBuyAvgs, ...allSellAvgs);
+              const avgPrice = (s.shark_buyavg + s.shark_sellavg + s.retail_buyavg + s.retail_sellavg) / 4;
+
+              // Shark price data
+              const allSharkBuyPrices = daily.map(d => d.shark_buyavg || 0).filter(v => v > 0);
+              const allSharkSellPrices = daily.map(d => d.shark_sellavg || 0).filter(v => v > 0);
+
+              // Last shark buy price (most recent day)
+              const lastSharkBuyPrice = allSharkBuyPrices.length > 0 ? allSharkBuyPrices[allSharkBuyPrices.length - 1] : avgSharkBuy;
+
+              const avgSharkBuy = allSharkBuyPrices.reduce((a, b) => a + b, 0) / allSharkBuyPrices.length;
+              const avgSharkSell = allSharkSellPrices.reduce((a, b) => a + b, 0) / allSharkSellPrices.length;
+
+              // ===== ENHANCED VOLATILITY CALCULATION =====
+              const minSharkBuy = Math.min(...allSharkBuyPrices);
+              const maxSharkBuy = Math.max(...allSharkBuyPrices);
+              const priceRange = maxSharkBuy - minSharkBuy;
+
+              // Calculate True Range-like volatility (intraday high-low approximation)
+              const dailyRanges = daily.map(d => {
+                  const buy = d.shark_buyavg || 0;
+                  const sell = d.shark_sellavg || 0;
+                  return sell > buy ? (sell - buy) / buy : 0;
+              }).filter(v => v > 0);
+
+              const avgDailyRange = dailyRanges.length > 0
+                  ? dailyRanges.reduce((a, b) => a + b, 0) / dailyRanges.length
+                  : 0.02;
+
+              // Combined volatility factor (price range + daily volatility)
+              const rangeVolatility = priceRange > 0 ? priceRange / avgSharkBuy : 0.05;
+              const volatilityFactor = Math.max(rangeVolatility, avgDailyRange);
+
+              // ===== TREND ANALYSIS =====
+              const firstHalf = daily.slice(0, Math.floor(daily.length / 2));
+              const secondHalf = daily.slice(Math.floor(daily.length / 2));
+
+              const firstHalfAvgBuy = firstHalf.reduce((a, d) => a + (d.shark_buyavg || 0), 0) / firstHalf.length;
+              const secondHalfAvgBuy = secondHalf.reduce((a, d) => a + (d.shark_buyavg || 0), 0) / secondHalf.length;
+
+              const trendPercent = firstHalfAvgBuy > 0 ? ((secondHalfAvgBuy - firstHalfAvgBuy) / firstHalfAvgBuy) * 100 : 0;
+              const trendDirection = trendPercent > 2 ? 'UPTREND' : trendPercent < -2 ? 'DOWNTREND' : 'SIDEWAYS';
+              const trendStrength = Math.abs(trendPercent);
+
+              // ===== IMPROVED BUY ZONE CALCULATION =====
+              // Method 1: VWAP-like approach (Volume Weighted Average Price approximation)
+              // Use shark buy values as weights for buy prices
+              let weightedBuySum = 0;
+              let totalBuyWeight = 0;
+              daily.forEach(d => {
+                  if (d.shark_buyavg > 0 && d.shark_buy > 0) {
+                      weightedBuySum += d.shark_buyavg * d.shark_buy;
+                      totalBuyWeight += d.shark_buy;
+                  }
+              });
+              const vwapBuyPrice = totalBuyWeight > 0 ? weightedBuySum / totalBuyWeight : avgSharkBuy;
+
+              // Method 2: Support Zone (recent accumulation levels)
+              const recentBuyPrices = recent5Days.filter(d => d.shark_buyavg > 0).map(d => d.shark_buyavg);
+              const lowestRecentBuy = recentBuyPrices.length > 0 ? Math.min(...recentBuyPrices) : minSharkBuy;
+
+              // Method 3: Discount from average
+              const discountPercent = Math.max(0.02, Math.min(0.06, volatilityFactor * 0.6));
+              const discountBuyZone = vwapBuyPrice * (1 - discountPercent);
+
+              // FINAL BUY ZONE: Conservative approach - use the HIGHEST of the methods (safer entry)
+              let buyZone = Math.max(
+                  discountBuyZone,      // VWAP minus discount
+                  lowestRecentBuy * 0.98, // Recent support with small buffer
+                  minSharkBuy * 1.01     // All-time low with buffer
+              );
+
+              // ===== TARGET PRICE CALCULATION =====
+              // Use R:RR (Risk-Reward Ratio) approach
+              // Base target: Shark sell average
+              const baseTarget = avgSharkSell;
+
+              // Calculate resistance zones (areas where shark sold heavily)
+              const resistanceLevels = daily.filter(d => (d.shark_sellavg || 0) > avgSharkSell * 1.02);
+              const strongResistance = resistanceLevels.length > 0
+                  ? resistanceLevels.reduce((a, d) => a + d.shark_sellavg, 0) / resistanceLevels.length
+                  : avgSharkSell;
+
+              // Risk amount dihitung dari buyZone
+              const riskPercent = Math.max(0.03, Math.min(0.05, volatilityFactor));
+              const riskAmount = buyZone * riskPercent;
+
+              // Target options based on R:RR
+              const target1RR = buyZone + (riskAmount * 1.5);  // Conservative 1:1.5
+              const target2RR = buyZone + (riskAmount * 2.5);  // Moderate 1:2.5
+              const target3RR = buyZone + (riskAmount * 4);    // Aggressive 1:4
+
+              // Final target: Conservative of technical target and shark behavior
+              let targetPrice = Math.min(
+                  baseTarget,
+                  strongResistance,
+                  target2RR
+              );
+
+              // ===== IMPROVED SELL ZONE CALCULATION =====
+              // Distribution zone detection
+              const highSellActivityDays = daily.filter(d =>
+                  (d.shark_sell || 0) > (d.shark_buy || 0) * 1.5 &&
+                  (d.shark_sellavg || 0) > avgSharkBuy
+              );
+
+              const distributionZone = highSellActivityDays.length > 0
+                  ? highSellActivityDays.reduce((a, d) => a + d.shark_sellavg, 0) / highSellActivityDays.length
+                  : avgSharkSell;
+
+              let sellZone = Math.max(
+                  distributionZone,
+                  avgSharkSell * 1.02,
+                  maxSharkBuy * 1.05
+              );
+
+              // ===== IMPROVED STOP LOSS CALCULATION =====
+              // Method 1: Structure-based (below recent swing low)
+              const structureStopLoss = lowestRecentBuy * 0.97;
+
+              // Method 2: Volatility-adjusted (ATR-like)
+              const atrMultiplier = Math.max(1.5, Math.min(2.5, volatilityFactor * 20));
+              const volatilityStopLoss = buyZone - (buyZone * avgDailyRange * atrMultiplier);
+
+              // Method 3: Percentage-based with trend adjustment
+              let baseStopPercent = Math.max(0.03, Math.min(0.05, volatilityFactor));
+              // Wider stop in uptrend (give room), tighter in downtrend
+              if (trendDirection === 'UPTREND') {
+                  baseStopPercent *= 1.2;
+              } else if (trendDirection === 'DOWNTREND') {
+                  baseStopPercent *= 0.8;
+              }
+              const percentageStopLoss = buyZone * (1 - baseStopPercent);
+
+              // FINAL STOP LOSS: Use the HIGHEST (most forgiving) but reasonable
+              let stopLoss = Math.max(
+                  structureStopLoss,
+                  volatilityStopLoss,
+                  percentageStopLoss
+              );
+
+              // ===== CONFIDENCE SCORE CALCULATION =====
+              let confidenceScore = 0;
+              let confidenceFactors = [];
+
+              // Factor 1: Shark accumulation strength
+              if (s.shark_net > 5) {
+                  confidenceScore += 25;
+                  confidenceFactors.push('Akumulasi Shark kuat');
+              } else if (s.shark_net > 1) {
+                  confidenceScore += 15;
+                  confidenceFactors.push('Akumulasi Shark moderat');
+              }
+
+              // Factor 2: Trend alignment
+              if (trendDirection === 'UPTREND' && recommendation === 'BUY') {
+                  confidenceScore += 20;
+                  confidenceFactors.push('Trend naik, align dengan BUY');
+              } else if (trendDirection === 'DOWNTREND' && recommendation === 'SELL') {
+                  confidenceScore += 20;
+                  confidenceFactors.push('Trend turun, align dengan SELL');
+              } else if (trendDirection === 'SIDEWAYS') {
+                  confidenceScore += 5;
+                  confidenceFactors.push('Market sideways, waspada');
+              }
+
+              // ===== APPLY BEI TICK SIZE ROUNDING =====
+              // Round semua harga ke tick size BEI untuk realistis
+              const rawBuyZone = buyZone;
+              const rawTargetPrice = targetPrice;
+              const rawSellZone = sellZone;
+              const rawStopLoss = stopLoss;
+
+              // Round buy zone
+              buyZone = roundPriceByPurpose(rawBuyZone, 'buy');
+              targetPrice = roundPriceByPurpose(targetPrice, 'target');
+              sellZone = roundPriceByPurpose(sellZone, 'sell');
+              stopLoss = roundPriceByPurpose(stopLoss, 'stoploss');
+
+              // Get tick size info untuk display
+              const tickSize = getBEITickSize(buyZone);
+              const tickInfo = `Tick: Rp ${tickSize}`;
+
+              // VALIDASI: Pastikan stop loss tidak terlalu dekat dengan buy zone
+              // Minimum gap antara buy zone dan stop loss adalah 3%
+              const minStopGap = buyZone * 0.03;
+              if ((buyZone - stopLoss) < minStopGap) {
+                  stopLoss = buyZone - minStopGap;
+              }
+
+              // Factor 3: Risk-Reward Ratio
+              const rrRatio = (targetPrice - buyZone) / (buyZone - stopLoss);
+
+              // CAP RR Ratio untuk display (max 10:1, lebih dari itu unrealistic)
+              const displayRR = Math.min(rrRatio, 10);
+
+              if (rrRatio >= 3) {
+                  confidenceScore += 20;
+                  confidenceFactors.push(`R:RR excellent (${displayRR.toFixed(1)}:1)`);
+              } else if (rrRatio >= 2) {
+                  confidenceScore += 15;
+                  confidenceFactors.push(`R:RR baik (${displayRR.toFixed(1)}:1)`);
+              } else if (rrRatio >= 1.5) {
+                  confidenceScore += 10;
+                  confidenceFactors.push(`R:RR moderat (${displayRR.toFixed(1)}:1)`);
+              } else {
+                  confidenceScore -= 10;
+                  confidenceFactors.push(`R:RR kurang ideal (${displayRR.toFixed(1)}:1)`);
+              }
+
+              // Factor 4: Price position in range
+              const pricePosition = (avgSharkBuy - minSharkBuy) / (maxSharkBuy - minSharkBuy);
+              if (pricePosition < 0.3) {
+                  confidenceScore += 15;
+                  confidenceFactors.push('Harga dekat support bawah');
+              } else if (pricePosition > 0.7) {
+                  confidenceScore -= 10;
+                  confidenceFactors.push('Harga dekat resistance atas');
+              }
+
+              // Factor 5: Volatility check
+              if (volatilityFactor < 0.05) {
+                  confidenceScore += 10;
+                  confidenceFactors.push('Volatilitas rendah (stable)');
+              } else if (volatilityFactor > 0.15) {
+                  confidenceScore -= 10;
+                  confidenceFactors.push('Volatilitas tinggi (risky)');
+              }
+
+              // Clamp confidence score
+              confidenceScore = Math.max(0, Math.min(100, confidenceScore));
+              const confidenceLevel = confidenceScore >= 70 ? 'TINGGI' : confidenceScore >= 50 ? 'SEDANG' : 'RENDAH';
+
+              // ===== UPDATE UI =====
+              // Tambahkan tooltip dengan info tick size
+              const buyTick = getBEITickSize(buyZone);
+              const targetTick = getBEITickSize(targetPrice);
+              const sellTick = getBEITickSize(sellZone);
+              const stopTick = getBEITickSize(stopLoss);
+
+              document.getElementById('buyZone').innerHTML = `Rp ${buyZone}<sup style="font-size:0.7em; color:#888;">tick:${buyTick}</sup>`;
+              document.getElementById('targetPrice').innerHTML = `Rp ${targetPrice}<sup style="font-size:0.7em; color:#888;">tick:${targetTick}</sup>`;
+              document.getElementById('sellZone').innerHTML = `Rp ${sellZone}<sup style="font-size:0.7em; color:#888;">tick:${sellTick}</sup>`;
+              document.getElementById('stopLoss').innerHTML = `Rp ${stopLoss}<sup style="font-size:0.7em; color:#888;">tick:${stopTick}</sup>`;
+
+              // ===== GENERATE DETAILED PRICE ADVICE =====
+              const potentialProfit = ((targetPrice - buyZone) / buyZone * 100).toFixed(1);
+              const potentialLoss = ((buyZone - stopLoss) / buyZone * 100).toFixed(1);
+
+              // CAP RR Ratio untuk display (max 10:1)
+              const finalRR = Math.min(rrRatio, 10).toFixed(1);
+
+              let priceAdvice = '';
+
+              // Add trend info
+              const trendEmoji = trendDirection === 'UPTREND' ? '📈' : trendDirection === 'DOWNTREND' ? '📉' : '➡️';
+              priceAdvice += `${trendEmoji} <strong>TREND:</strong> ${trendDirection} (${trendStrength >= 5 ? 'Kuat' : trendStrength >= 2 ? 'Moderat' : 'Lemah'}) | `;
+
+              // Add confidence
+              const confidenceColor = confidenceLevel === 'TINGGI' ? '#27ae60' : confidenceLevel === 'SEDANG' ? '#f39c12' : '#e74c3c';
+              priceAdvice += `<strong>KONFIDENSI:</strong> <span style="color:${confidenceColor}">${confidenceLevel}</span> (${confidenceScore}/100)<br><br>`;
+
+              if (recommendation === 'BUY') {
+                  priceAdvice += `💡 <strong>STRATEGI ENTRY</strong>:<br>`;
+                  priceAdvice += `• <strong>Buy Zone:</strong> Rp ${buyZone} (VWAP Shark - ${(discountPercent * 100).toFixed(1)}%)<br>`;
+                  priceAdvice += `• <strong>Harga Terakhir Shark:</strong> Rp ${roundToBEITick(lastSharkBuyPrice, false)}<br>`;
+                  priceAdvice += `• <strong>Target:</strong> Rp ${targetPrice} (potensi +${potentialProfit}%)<br>`;
+                  priceAdvice += `• <strong>Stop Loss:</strong> Rp ${stopLoss} (risiko -${potentialLoss}%)<br>`;
+                  priceAdvice += `• <strong>R:RR:</strong> ${finalRR}:1 ${finalRR >= 2.5 ? '✅ Excellent' : finalRR >= 2 ? '✅ Baik' : finalRR >= 1.5 ? '⚠️ Moderat' : '❌ Kurang'}<br><br>`;
+
+                  priceAdvice += `<strong>Faktor Pendukung:</strong><br>`;
+                  priceAdvice += `• ${confidenceFactors.join('<br>• ')}<br><br>`;
+
+                  priceAdvice += `📊 <strong>TECHNICAL LEVELS (dibulatkan ke tick BEI):</strong><br>`;
+                  priceAdvice += `• Support kuat: Rp ${roundToBEITick(lowestRecentBuy, true)}<br>`;
+                  priceAdvice += `• Resistance: Rp ${roundToBEITick(strongResistance, false)}<br>`;
+                  priceAdvice += `• Range saat ini: Rp ${roundToBEITick(minSharkBuy, true)} - Rp ${roundToBEITick(maxSharkBuy, false)}`;
+
+              } else if (recommendation === 'SELL') {
+                  priceAdvice += `💡 <strong>STRATEGI EXIT</strong>:<br>`;
+                  priceAdvice += `• <strong>Sell Zone:</strong> Rp ${sellZone} (area distribusi Shark)<br>`;
+                  priceAdvice += `• <strong>Target Exit:</strong> Rp ${targetPrice}<br>`;
+                  priceAdvice += `• <strong>Stop Loss:</strong> Rp ${stopLoss} (jika masih hold)<br><br>`;
+
+                  priceAdvice += `<strong>Faktor Pendukung:</strong><br>`;
+                  priceAdvice += `• ${confidenceFactors.join('<br>• ')}<br><br>`;
+
+                  priceAdvice += `⚠️ <strong>PERINGATAN:</strong> Shark sedang distribusi. Pertimbangkan take profit atau cut loss.`;
+
+              } else {
+                  priceAdvice += `⏸️ <strong>STRATEGI WAIT</strong>:<br>`;
+                  priceAdvice += `• Signal campuran, tidak ada konfirmasi jelas<br>`;
+                  priceAdvice += `• <strong>Buy jika:</strong> Harga turun ke Rp ${buyZone} atau break resistance Rp ${sellZone}<br>`;
+                  priceAdvice += `• <strong>Sell jika:</strong> Harga break support Rp ${stopLoss}<br><br>`;
+
+                  priceAdvice += `<strong>LEVELS PANTAU (dibulatkan ke tick BEI):</strong><br>`;
+                  priceAdvice += `• Support: Rp ${buyZone}<br>`;
+                  priceAdvice += `• Resistance: Rp ${sellZone}<br>`;
+                  priceAdvice += `• Current range: Rp ${roundToBEITick(minSharkBuy, true)} - Rp ${roundToBEITick(maxSharkBuy, false)}`;
+              }
+
+              document.getElementById('priceAdvice').innerHTML = priceAdvice;
+
+              // ===== ADD CONFIDENCE INDICATOR TO RECOMMENDATION BADGE =====
+              // Update badge shadow based on confidence level
+              if (confidenceLevel === 'TINGGI') {
+                  badge.style.boxShadow = '0 4px 20px rgba(39, 174, 96, 0.5)';
+              } else if (confidenceLevel === 'RENDAH') {
+                  badge.style.boxShadow = '0 4px 15px rgba(231, 76, 60, 0.3)';
+              } else {
+                  badge.style.boxShadow = '0 4px 15px rgba(243, 156, 18, 0.3)';
+              }
+        }
+        function createCharts() {
+            destroyCharts();
+            const daily = currentStock.daily;
+            const labels = daily.map(d => d.date_display || `Hari ${d.day}`);
+            // Buy Pie Chart
+            const buyCtx = document.getElementById('buyPieChart').getContext('2d');
+            buyPieChart = new Chart(buyCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Shark', 'Ritel'],
+                    datasets: [{
+                        data: [currentStock.summary.shark_buy, currentStock.summary.retail_buy],
+                        backgroundColor: ['#e74c3c', '#3498db'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.label}: Rp ${ctx.raw} Triliun`
+                            }
+                        }
+                    }
+                }
+            });
+            // Sell Pie Chart
+            const sellCtx = document.getElementById('sellPieChart').getContext('2d');
+            sellPieChart = new Chart(sellCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Shark', 'Ritel'],
+                    datasets: [{
+                        data: [currentStock.summary.shark_sell, currentStock.summary.retail_sell],
+                        backgroundColor: ['#c0392b', '#2980b9'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.label}: Rp ${ctx.raw} Triliun`
+                            }
+                        }
+                    }
+                }
+            });
+            // Cumulative Chart
+            const cumCtx = document.getElementById('cumulativeChart').getContext('2d');
+            cumulativeChart = new Chart(cumCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Shark Cumulative',
+                            data: daily.map(d => d.shark_cum_net),
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'Ritel Cumulative',
+                            data: daily.map(d => d.retail_cum_net),
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false }, ticks: { color: '#888', maxTicksLimit: 10 } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false }, ticks: { color: '#888', callback: v => `${v >= 0 ? '+' : ''}${v} M` } }
+                    },
+                    plugins: {
+                        legend: { display: true, labels: { color: '#888' }, position: 'top' }
+                    }
+                }
+            });
+            // Average Price Chart (Shark & Ritel BuyAvg & SellAvg per Day)
+            const avgCtx = document.getElementById('avgPriceChart').getContext('2d');
+            avgPriceChart = new Chart(avgCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Shark Buy Avg',
+                            data: daily.map(d => d.shark_buyavg || 0),
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            fill: false,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3
+                        },
+                        {
+                            label: 'Shark Sell Avg',
+                            data: daily.map(d => d.shark_sellavg || 0),
+                            borderColor: '#c0392b',
+                            backgroundColor: 'rgba(192, 57, 43, 0.1)',
+                            fill: false,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3
+                        },
+                        {
+                            label: 'Ritel Buy Avg',
+                            data: daily.map(d => d.retail_buyavg || 0),
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            fill: false,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3
+                        },
+                        {
+                            label: 'Ritel Sell Avg',
+                            data: daily.map(d => d.retail_sellavg || 0),
+                            borderColor: '#2980b9',
+                            backgroundColor: 'rgba(41, 128, 185, 0.1)',
+                            fill: false,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false }, ticks: { color: '#888', maxTicksLimit: 10 } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false }, ticks: { color: '#888', callback: v => 'Rp ' + v.toFixed(0) } }
+                    },
+                    plugins: {
+                        legend: { display: true, labels: { color: '#888' }, position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.dataset.label}: Rp ${ctx.raw.toFixed(2)}`
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            });
+            // Ownership Chart (Net Lot per Day)
+            const ownCtx = document.getElementById('ownershipChart').getContext('2d');
+            ownershipChart = new Chart(ownCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Shark Net Lot',
+                            data: daily.map(d => d.shark_net_lot || 0),
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'Ritel Net Lot',
+                            data: daily.map(d => d.retail_net_lot || 0),
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false }, ticks: { color: '#888', maxTicksLimit: 10 } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false }, ticks: { color: '#888', callback: v => v.toLocaleString('id-ID') + ' lot' } }
+                    },
+                    plugins: {
+                        legend: { display: true, labels: { color: '#888' }, position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.dataset.label}: ${ctx.raw.toLocaleString('id-ID')} lot (${(ctx.raw * 100).toLocaleString('id-ID')} saham)`
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            });
+            // Top Brokers Chart
+            const brokers = currentStock.brokers.slice(0, 15);
+            const topCtx = document.getElementById('topBrokersChart').getContext('2d');
+            topBrokersChart = new Chart(topCtx, {
+                type: 'bar',
+                data: {
+                    labels: brokers.map(b => b.code),
+                    datasets: [
+                        {
+                            label: 'BUY',
+                            data: brokers.map(b => b.buy),
+                            backgroundColor: '#27ae60'
+                        },
+                        {
+                            label: 'SELL',
+                            data: brokers.map(b => b.sell),
+                            backgroundColor: '#e74c3c'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, grid: { display: false }, ticks: { color: '#888' } },
+                        y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888' } }
+                    },
+                    plugins: {
+                        legend: { display: true, labels: { color: '#888' }, position: 'top' }
+                    }
+                }
+            });
+            // Price & Flow Chart (Average Buy/Sell Prices + Separate Cumulative Net Flow)
+            const pfCtx = document.getElementById('priceFlowChart').getContext('2d');
+            // Calculate cumulative flows separately for shark and retail
+            let sharkCumFlow = 0;
+            let retailCumFlow = 0;
+            const sharkCumulativeFlow = daily.map(d => {
+                sharkCumFlow += (d.shark_net || 0);
+                return sharkCumFlow;
+            });
+            const retailCumulativeFlow = daily.map(d => {
+                retailCumFlow += (d.retail_net || 0);
+                return retailCumFlow;
+            });
+            priceFlowChart = new Chart(pfCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Shark Buy Avg',
+                            data: daily.map(d => d.shark_buyavg || 0),
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.05)',
+                            fill: false,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#e74c3c',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Shark Sell Avg',
+                            data: daily.map(d => d.shark_sellavg || 0),
+                            borderColor: '#c0392b',
+                            backgroundColor: 'rgba(192, 57, 43, 0.05)',
+                            fill: false,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#c0392b',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Ritel Buy Avg',
+                            data: daily.map(d => d.retail_buyavg || 0),
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.05)',
+                            fill: false,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#3498db',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Ritel Sell Avg',
+                            data: daily.map(d => d.retail_sellavg || 0),
+                            borderColor: '#2980b9',
+                            backgroundColor: 'rgba(41, 128, 185, 0.05)',
+                            fill: false,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#2980b9',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Shark Cum Flow',
+                            data: sharkCumulativeFlow,
+                            borderColor: '#e67e22',
+                            backgroundColor: 'rgba(230, 126, 34, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 2,
+                            pointBackgroundColor: '#e67e22',
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Ritel Cum Flow',
+                            data: retailCumulativeFlow,
+                            borderColor: '#27ae60',
+                            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 2,
+                            pointBackgroundColor: '#27ae60',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+                            ticks: { color: '#888', maxTicksLimit: 10 }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+                            ticks: { color: '#888', callback: v => 'Rp ' + v.toFixed(0) },
+                            title: { display: true, text: 'Harga Rata-rata', color: '#888' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: '#27ae60', callback: v => (v >= 0 ? '+' : '') + v.toFixed(1) + ' M' },
+                            title: { display: true, text: 'Cumulative Net Flow', color: '#27ae60' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: true, labels: { color: '#888', boxWidth: 15, padding: 15 }, position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    const idx = ctx.datasetIndex;
+                                    const raw = ctx.raw;
+                                    if (idx === 0) return `Shark Buy Avg: Rp ${raw.toFixed(2)}`;
+                                    if (idx === 1) return `Shark Sell Avg: Rp ${raw.toFixed(2)}`;
+                                    if (idx === 2) return `Ritel Buy Avg: Rp ${raw.toFixed(2)}`;
+                                    if (idx === 3) return `Ritel Sell Avg: Rp ${raw.toFixed(2)}`;
+                                    if (idx === 4) return `Shark Cum Flow: ${(raw >= 0 ? '+' : '')}${raw.toFixed(2)} Miliar`;
+                                    if (idx === 5) return `Ritel Cum Flow: ${(raw >= 0 ? '+' : '')}${raw.toFixed(2)} Miliar`;
+                                    return '';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        function destroyCharts() {
+            if (buyPieChart) { buyPieChart.destroy(); buyPieChart = null; }
+            if (sellPieChart) { sellPieChart.destroy(); sellPieChart = null; }
+            if (cumulativeChart) { cumulativeChart.destroy(); cumulativeChart = null; }
+            if (avgPriceChart) { avgPriceChart.destroy(); avgPriceChart = null; }
+            if (ownershipChart) { ownershipChart.destroy(); ownershipChart = null; }
+            if (topBrokersChart) { topBrokersChart.destroy(); topBrokersChart = null; }
+            if (priceFlowChart) { priceFlowChart.destroy(); priceFlowChart = null; }
+        }
+        function populateTable(filter = 'all') {
+            const tbody = document.getElementById('brokerTableBody');
+            tbody.innerHTML = '';
+            let brokers = currentStock.brokers;
+            if (filter === 'shark') {
+                brokers = brokers.filter(b => b.category === 'shark');
+            } else if (filter === 'retail') {
+                brokers = brokers.filter(b => b.category === 'retail');
+            }
+            brokers.forEach((b, i) => {
+                const row = document.createElement('tr');
+                const netClass = b.net >= 0 ? 'positive' : 'negative';
+                row.innerHTML = `
+                    <td>${i + 1}</td>
+                    <td><strong>${b.code}</strong></td>
+                    <td style="text-align:left;">${b.name}</td>
+                    <td style="color:#27ae60;">Rp ${b.buy.toFixed(2)} M</td>
+                    <td style="color:#888;">${b.buyavg > 0 ? 'Rp ' + b.buyavg.toFixed(2) : '-'}</td>
+                    <td style="color:#e74c3c;">Rp ${b.sell.toFixed(2)} M</td>
+                    <td style="color:#888;">${b.sellavg > 0 ? 'Rp ' + b.sellavg.toFixed(2) : '-'}</td>
+                    <td style="color:${b.net >= 0 ? '#27ae60' : '#e74c3c'};" class="${netClass}">
+                        ${b.net >= 0 ? '+' : ''}Rp ${b.net.toFixed(2)} M
+                    </td>
+                    <td style="color:#888;">Rp ${b.total.toFixed(2)} M</td>
+                    <td><span class="badge ${b.category}">${b.category === 'shark' ? 'SHARK' : 'RITEL'}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+            // Add date row at end of table
+            const dateRow = document.createElement('tr');
+            dateRow.style.background = 'rgba(255,255,255,0.05)';
+            dateRow.innerHTML = `
+                <td colspan="10" style="padding: 15px; text-align: left; color: #888;">
+                    <strong>Periode Data:</strong> ${currentStock.date_start} s/d ${currentStock.date_end} | Total: ${currentStock.daily.length} hari trading
+                </td>
+            `;
+            tbody.appendChild(dateRow);
+        }
+        function filterTable(filter) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            populateTable(filter);
+        }
+        // Auto-load data on page load
+        window.onload = function() {
+            loadData();
+        };
+    </script>
+</body>
+</html>
