@@ -2,7 +2,10 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <!-- Version: 5.0 - Simplified display-only version (calculations moved to Python) -->
 <title>Lamalera</title>
@@ -705,9 +708,239 @@
         .stock-rec-confidence.high { background: rgba(39, 174, 96, 0.3); color: #27ae60; }
         .stock-rec-confidence.medium { background: rgba(243, 156, 18, 0.3); color: #f39c12; }
         .stock-rec-confidence.low { background: rgba(231, 76, 60, 0.3); color: #e74c3c; }
-        @media (max-width: 768px) {
-            .chart-section { grid-template-columns: 1fr; }
+        /* ============================================
+           RESPONSIVE DESIGN - MOBILE FIRST
+           ============================================ */
+
+        /* Extra Small Devices (phones, < 480px) */
+        @media (max-width: 479px) {
+            .container { padding: 10px; }
+            .header { padding: 15px 0; margin-bottom: 15px; }
+            .header h1 { font-size: 1.5rem; margin-bottom: 8px; }
+            .header p { font-size: 0.75rem; }
+            .stock-selector { gap: 10px; margin-bottom: 15px; }
+            .stock-selector label { font-size: 0.9rem; }
+            .stock-selector select {
+                min-width: 100%;
+                padding: 8px 12px;
+                font-size: 0.9rem;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                margin-bottom: 15px;
+            }
+            .stat-card { padding: 12px 8px; }
+            .stat-card h3 { font-size: 0.7rem; }
+            .stat-card .value { font-size: 1.1rem; }
+            .stat-card .subtext { font-size: 0.65rem; }
+            .recommendation-panel {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 15px;
+            }
+            .recommendation-card, .price-rec-card { padding: 15px; }
+            .rec-badge { font-size: 1.2rem; padding: 6px 20px; }
+            .price-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .price-item { padding: 10px 5px; }
+            .price-label { font-size: 0.65rem; }
+            .price-label-sub { font-size: 0.55rem; }
+            .price-value { font-size: 0.9rem; }
+            .rec-signals { grid-template-columns: 1fr; gap: 8px; }
+            .signal-item { padding: 8px; }
+            .signal-label { font-size: 0.7rem; }
+            .signal-value { font-size: 0.85rem; }
+            .price-advice-text { font-size: 0.75rem; }
+            .chart-section {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 15px;
+            }
+            .chart-header-row { flex-direction: column; align-items: flex-start; }
+            .chart-container { padding: 12px; }
+            .chart-container h2 { font-size: 0.85rem; }
+            .chart-wrapper { height: 220px; }
+            .chart-wrapper.tall { height: 280px; }
+            .chart-description { font-size: 0.7rem; padding: 10px; margin-top: 10px; }
+            .legend { gap: 10px; }
+            .legend-item { font-size: 0.7rem; }
+            .legend-color { width: 12px; height: 12px; }
+            .insight-panel {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 15px;
+            }
+            .insight-card { padding: 15px; }
+            .insight-card h3 { font-size: 0.8rem; }
+            .insight-card p { font-size: 0.8rem; }
+            .legend-panel { padding: 15px; margin-bottom: 15px; }
+            .legend-grid { grid-template-columns: 1fr; gap: 12px; }
+            .legend-item { padding: 12px; }
+            .legend-header { font-size: 0.85rem; }
+            .legend-icon { font-size: 1.3rem; }
+            .legend-title { font-size: 0.85rem; }
+            .legend-body { font-size: 0.75rem; }
+            .legend-desc { padding: 8px; margin-bottom: 8px; }
+            .legend-text { font-size: 0.75rem; line-height: 1.4; }
+            .signal-badge { font-size: 0.6rem; padding: 3px 8px; }
+            .logic-grid { grid-template-columns: 1fr; gap: 10px; }
+            .logic-item { padding: 12px; }
+            .logic-phase { font-size: 0.75rem; }
+            .logic-desc { font-size: 0.75rem; }
+            .legend-note { padding: 12px; font-size: 0.7rem; line-height: 1.5; }
+            .broker-table { padding: 12px; margin-bottom: 15px; }
+            .table-controls { flex-direction: column; align-items: stretch; gap: 10px; }
+            .table-controls h3 { font-size: 0.9rem; text-align: center; }
+            .filter-group { justify-content: center; }
+            .filter-btn { padding: 6px 12px; font-size: 0.8rem; }
+            table { font-size: 0.7rem; }
+            th, td { padding: 8px 4px; }
+            .badge { font-size: 0.6rem; padding: 2px 6px; }
+            #loadingMessage { padding: 20px 15px; }
+            #loadingMessage p { font-size: 0.9rem; }
+            .file-input-area { padding: 15px; }
+            .file-input-area button { padding: 8px 15px; font-size: 0.85rem; }
+            #recommendationsList {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .stock-rec-card { padding: 15px; }
+            .stock-rec-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .stock-rec-code { font-size: 1.4rem; }
+            .stock-rec-badge { align-self: flex-start; }
+            .stock-rec-info { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .stock-rec-info-label { font-size: 0.65rem; }
+            .stock-rec-info-value { font-size: 0.9rem; }
+            .stock-rec-reason { font-size: 0.75rem; padding-top: 8px; }
+            .stock-rec-confidence { font-size: 0.6rem; padding: 2px 6px; }
+        }
+
+        /* Small Devices (landscape phones, 480px - 640px) */
+        @media (min-width: 480px) and (max-width: 639px) {
+            .container { padding: 15px; }
+            .header h1 { font-size: 1.8rem; }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .stat-card { padding: 15px 10px; }
+            .recommendation-panel {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .price-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+            }
+            .chart-section {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .chart-wrapper { height: 240px; }
+            .insight-panel { grid-template-columns: 1fr; }
+            .legend-grid { grid-template-columns: 1fr; gap: 15px; }
+            .broker-table { padding: 15px; }
+            #recommendationsList {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+        }
+
+        /* Medium Devices (tablets, 640px - 768px) */
+        @media (min-width: 640px) and (max-width: 768px) {
+            .container { padding: 15px; }
             .header h1 { font-size: 2rem; }
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .recommendation-panel {
+                grid-template-columns: 1fr 1fr;
+            }
+            .price-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .chart-section {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            .insight-panel { grid-template-columns: 1fr; }
+            .legend-grid { grid-template-columns: 1fr 1fr; }
+            #recommendationsList {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Large Devices (tablets landscape, 768px - 1024px) */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container { max-width: 1024px; padding: 20px; }
+            .header h1 { font-size: 2.2rem; }
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .chart-section {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .legend-grid { grid-template-columns: repeat(2, 1fr); }
+            #recommendationsList {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Extra Large Devices (desktops, > 1024px) */
+        @media (min-width: 1025px) {
+            .container { max-width: 1600px; }
+        }
+
+        /* Dark mode adjustments for mobile */
+        @media (prefers-color-scheme: dark) and (max-width: 768px) {
+            body { background: linear-gradient(135deg, #080810 0%, #12121f 50%, #0f1626 100%); }
+        }
+
+        /* Touch-friendly interactive elements */
+        @media (hover: none) and (pointer: coarse) {
+            .filter-btn, .stock-selector select, .stock-rec-card {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            .stat-card:hover, .stock-rec-card:hover {
+                transform: none;
+            }
+            .stat-card:active, .stock-rec-card:active {
+                transform: scale(0.98);
+            }
+            table { font-size: 0.8rem; }
+            th, td { padding: 12px 6px; }
+        }
+
+        /* Smooth scrolling for mobile */
+        @media (max-width: 768px) {
+            html { scroll-behavior: smooth; }
+            body { -webkit-overflow-scrolling: touch; }
+            .broker-table {
+                -webkit-overflow-scrolling: touch;
+                overflow-x: auto;
+            }
+        }
+
+        /* Hide scrollbars but keep functionality */
+        .broker-table::-webkit-scrollbar {
+            height: 4px;
+        }
+        .broker-table::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+
+        /* Mobile-specific adjustments for text */
+        @media (max-width: 479px) {
+            .price-advice-text, .chart-description, .legend-text {
+                text-align: justify;
+                hyphens: auto;
+                -webkit-hyphens: auto;
+            }
         }
     </style>
 </head>
@@ -1989,6 +2222,55 @@
             event.target.classList.add('active');
             populateTable(filter);
         }
+
+        // ===== RESPONSIVE CHART HANDLING =====
+        let resizeTimeout;
+        function handleResize() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                // Resize all active charts
+                const charts = [buyPieChart, sellPieChart, cumulativeChart, avgPriceChart, ownershipChart, topBrokersChart, priceFlowChart];
+                charts.forEach(chart => {
+                    if (chart) {
+                        chart.resize();
+                    }
+                });
+            }, 250);
+        }
+
+        // Handle orientation change for mobile
+        function handleOrientationChange() {
+            setTimeout(() => {
+                handleResize();
+                // Adjust chart heights for portrait/landscape
+                const isPortrait = window.innerHeight > window.innerWidth;
+                const chartWrappers = document.querySelectorAll('.chart-wrapper');
+                chartWrappers.forEach(wrapper => {
+                    if (isPortrait) {
+                        wrapper.style.height = wrapper.classList.contains('tall') ? '280px' : '220px';
+                    } else {
+                        wrapper.style.height = wrapper.classList.contains('tall') ? '350px' : '280px';
+                    }
+                });
+            }, 100);
+        }
+
+        // Event listeners for responsive behavior
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', handleOrientationChange);
+
+        // Detect viewport height changes (mobile browser toolbar)
+        let initialViewportHeight = window.innerHeight;
+        window.addEventListener('resize', () => {
+            const currentViewportHeight = window.innerHeight;
+            if (Math.abs(currentViewportHeight - initialViewportHeight) > 100) {
+                initialViewportHeight = currentViewportHeight;
+                document.documentElement.style.setProperty('--vh', `${currentViewportHeight * 0.01}px`);
+            }
+        });
+
+        // Initialize CSS variable for mobile viewport height
+        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
 
         // Auto-load data on page load
         window.onload = function() {
