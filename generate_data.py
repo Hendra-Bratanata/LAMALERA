@@ -3,11 +3,17 @@
 Generate JSON data from CSV broker analysis files with ALL calculations included.
 CSV files contain CUMULATIVE (YTD) data - need to calculate daily by subtracting previous day.
 All standalone calculations (score, recommendation, buyZone, etc.) are done here in Python.
+
+SUPPORTS MULTIPLE TIME PERIODS:
+- 1week.json   (last 7 days)
+- 1month.json  (last 30 days)
+- 3month.json  (last 90 days)
+- 6month.json  (last 180 days)
 """
 
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import OrderedDict
 
 # Shark brokers (institusional) - sesuai referensi broker_saham_indonesia.md
@@ -159,12 +165,12 @@ def calculate_signals_and_recommendation(summary, daily):
             is_whale_trapped = True
             whale_trap_level = 'severe'
             score -= 3  # Heavy penalty for severely trapped whale
-            signals.append(f'⚠️ WHALE TERJEBAK BERAT (harga {price_diff_ratio*100:.0f}% di bawah rata-rata beli)')
+            signals.append(f'[TRAPPED] WHALE TERJEBAK BERAT (harga {price_diff_ratio*100:.0f}% di bawah rata-rata beli)')
         elif price_diff_ratio > 0.10:  # More than 10% below = mildly trapped
             is_whale_trapped = True
             whale_trap_level = 'mild'
             score -= 1  # Penalty for trapped whale
-            signals.append(f'⚠️ Whale terjebak (harga {price_diff_ratio*100:.0f}% di bawah rata-rata beli)')
+            signals.append(f'[TRAPPED] Whale terjebak (harga {price_diff_ratio*100:.0f}% di bawah rata-rata beli)')
         else:
             signals.append('Status whale: Normal')
     elif not is_distributing_to_retail:
@@ -1220,8 +1226,176 @@ def process_stock_folder(stock_code, base_path):
         'insights': insights_data
     }
 
+def filter_data_by_period(stock_data, period_days):
+    """
+    Filter daily data by period and RECALCULATE all metrics.
+
+    period_days: number of days to include (7, 30, 90, 180)
+    Returns: new stock_data with filtered and recalculated data
+    """
+    if not stock_data or not stock_data.get('daily'):
+        return None
+
+    # Filter daily data to last N days
+    all_daily = stock_data['daily']
+    filtered_daily = all_daily[-period_days:] if len(all_daily) > period_days else all_daily
+
+    if not filtered_daily:
+        return None
+
+    # RECALCULATE summary based on filtered data
+    # Start from zeros and recalculate cumulative
+    summary_filtered = {
+        'whale_buy': 0,
+        'retail_buy': 0,
+        'whale_sell': 0,
+        'retail_sell': 0,
+        'whale_net': 0,
+        'retail_net': 0,
+        'total_buy': 0,
+        'total_sell': 0,
+        'whale_cum_buy_lot': 0,
+        'whale_cum_sell_lot': 0,
+        'retail_cum_buy_lot': 0,
+        'retail_cum_sell_lot': 0,
+        'whale_net_lot': 0,
+        'retail_net_lot': 0
+    }
+
+    # Process brokers for filtered period
+    brokers_filtered = []
+    broker_map = {}  # code -> broker data
+
+    for day_data in filtered_daily:
+        summary_filtered['whale_buy'] += day_data.get('whale_buy', 0)
+        summary_filtered['retail_buy'] += day_data.get('retail_buy', 0)
+        summary_filtered['whale_sell'] += day_data.get('whale_sell', 0)
+        summary_filtered['retail_sell'] += day_data.get('retail_sell', 0)
+
+        # Calculate lot positions (cumulative from filtered period start)
+        summary_filtered['whale_cum_buy_lot'] += day_data.get('whale_buy_lot', 0)
+        summary_filtered['whale_cum_sell_lot'] += day_data.get('whale_sell_lot', 0)
+        summary_filtered['retail_cum_buy_lot'] += day_data.get('retail_buy_lot', 0)
+        summary_filtered['retail_cum_sell_lot'] += day_data.get('retail_sell_lot', 0)
+
+    # Calculate averages from filtered period
+    total_whale_buy_vol = sum(d.get('whale_buy', 0) for d in filtered_daily)
+    total_whale_sell_vol = sum(d.get('whale_sell', 0) for d in filtered_daily)
+    total_retail_buy_vol = sum(d.get('retail_buy', 0) for d in filtered_daily)
+    total_retail_sell_vol = sum(d.get('retail_sell', 0) for d in filtered_daily)
+
+    if total_whale_buy_vol > 0:
+        # Weighted average buy price
+        whale_buy_avg = sum(d.get('whale_buyavg', 0) * d.get('whale_buy', 0) for d in filtered_daily if d.get('whale_buy', 0) > 0) / total_whale_buy_vol
+        summary_filtered['whale_buyavg'] = round(whale_buy_avg, 2)
+    else:
+        summary_filtered['whale_buyavg'] = 0
+
+    if total_whale_sell_vol > 0:
+        whale_sell_avg = sum(d.get('whale_sellavg', 0) * d.get('whale_sell', 0) for d in filtered_daily if d.get('whale_sell', 0) > 0) / total_whale_sell_vol
+        summary_filtered['whale_sellavg'] = round(whale_sell_avg, 2)
+    else:
+        summary_filtered['whale_sellavg'] = 0
+
+    if total_retail_buy_vol > 0:
+        retail_buy_avg = sum(d.get('retail_buyavg', 0) * d.get('retail_buy', 0) for d in filtered_daily if d.get('retail_buy', 0) > 0) / total_retail_buy_vol
+        summary_filtered['retail_buyavg'] = round(retail_buy_avg, 2)
+    else:
+        summary_filtered['retail_buyavg'] = 0
+
+    if total_retail_sell_vol > 0:
+        retail_sell_avg = sum(d.get('retail_sellavg', 0) * d.get('retail_sell', 0) for d in filtered_daily if d.get('retail_sell', 0) > 0) / total_retail_sell_vol
+        summary_filtered['retail_sellavg'] = round(retail_sell_avg, 2)
+    else:
+        summary_filtered['retail_sellavg'] = 0
+
+    summary_filtered['whale_net'] = summary_filtered['whale_buy'] - summary_filtered['whale_sell']
+    summary_filtered['retail_net'] = summary_filtered['retail_buy'] - summary_filtered['retail_sell']
+    summary_filtered['total_buy'] = summary_filtered['whale_buy'] + summary_filtered['retail_buy']
+    summary_filtered['total_sell'] = summary_filtered['whale_sell'] + summary_filtered['retail_sell']
+    summary_filtered['whale_net_lot'] = summary_filtered['whale_cum_buy_lot'] - summary_filtered['whale_cum_sell_lot']
+    summary_filtered['retail_net_lot'] = summary_filtered['retail_cum_buy_lot'] - summary_filtered['retail_cum_sell_lot']
+
+    # Recalculate brokers for filtered period
+    broker_totals = {}
+    for day_data in filtered_daily:
+        # Aggregate broker data from daily
+        for broker_data in day_data.get('brokers', []):
+            code = broker_data.get('code')
+            if code not in broker_totals:
+                broker_totals[code] = {
+                    'code': code,
+                    'name': broker_data.get('name', ''),
+                    'category': broker_data.get('category', 'retail'),
+                    'buy': 0,
+                    'sell': 0,
+                    'buy_lot': 0,
+                    'sell_lot': 0,
+                    'buyavg_weighted': 0,
+                    'sellavg_weighted': 0
+                }
+            b = broker_totals[code]
+            b['buy'] += broker_data.get('buy', 0)
+            b['sell'] += broker_data.get('sell', 0)
+            b['buy_lot'] += broker_data.get('buy_lot', 0)
+            b['sell_lot'] += broker_data.get('sell_lot', 0)
+            if broker_data.get('buy', 0) > 0:
+                b['buyavg_weighted'] += broker_data.get('buyavg', 0) * broker_data.get('buy', 0)
+            if broker_data.get('sell', 0) > 0:
+                b['sellavg_weighted'] += broker_data.get('sellavg', 0) * broker_data.get('sell', 0)
+
+    # Convert to list and calculate averages
+    for code, b in broker_totals.items():
+        if b['buy'] > 0:
+            b['buyavg'] = round(b['buyavg_weighted'] / b['buy'], 2)
+        else:
+            b['buyavg'] = 0
+        if b['sell'] > 0:
+            b['sellavg'] = round(b['sellavg_weighted'] / b['sell'], 2)
+        else:
+            b['sellavg'] = 0
+        b['net'] = round(b['buy'] - b['sell'], 2)
+        b['total'] = round(b['buy'] + b['sell'], 2)
+        b['buyavg_weighted'] = round(b['buyavg_weighted'], 2)
+        b['sellavg_weighted'] = round(b['sellavg_weighted'], 2)
+        brokers_filtered.append(b)
+
+    # Sort brokers by total volume
+    brokers_filtered.sort(key=lambda x: x['total'], reverse=True)
+
+    # RECALCULATE all analytics with filtered data
+    vt_data_filtered = calculate_volatility_and_trend(filtered_daily, summary_filtered)
+    signal_data_filtered = calculate_signals_and_recommendation(summary_filtered, filtered_daily)
+    price_data_filtered = calculate_price_recommendations(summary_filtered, filtered_daily, vt_data_filtered, signal_data_filtered)
+    confidence_data_filtered = calculate_confidence_score(summary_filtered, vt_data_filtered, signal_data_filtered, price_data_filtered, signal_data_filtered['recommendation'])
+    insights_data_filtered = generate_insights(summary_filtered, filtered_daily, vt_data_filtered)
+
+    # Create new filtered stock data
+    return {
+        'code': stock_data['code'],
+        'date_start': filtered_daily[0].get('date', '') if filtered_daily else '',
+        'date_end': filtered_daily[-1].get('date', '') if filtered_daily else '',
+        'summary': summary_filtered,
+        'brokers': brokers_filtered,
+        'daily': filtered_daily,
+        'volatilityTrend': vt_data_filtered,
+        'recommendation': signal_data_filtered,
+        'priceRecommendation': price_data_filtered,
+        'confidence': confidence_data_filtered,
+        'insights': insights_data_filtered
+    }
+
 def main():
     base_path = r'C:\Users\Hendra.LAPTOP-M9SC6TF3\Saham\Analisis'
+    output_path = r'C:\Users\Hendra.LAPTOP-M9SC6TF3\Saham'
+
+    # Define periods to generate
+    periods = [
+        {'name': '1week', 'days': 7, 'label': '1 Minggu'},
+        {'name': '1month', 'days': 30, 'label': '1 Bulan'},
+        {'name': '3month', 'days': 90, 'label': '3 Bulan'},
+        {'name': '6month', 'days': 180, 'label': '6 Bulan'}
+    ]
 
     try:
         stock_folders = [d for d in os.listdir(base_path)
@@ -1230,28 +1404,89 @@ def main():
         print(f"Base path not found: {base_path}")
         return
 
-    stocks_data = {}
+    # STEP 1: Process all stocks with FULL data first
+    print("=" * 60)
+    print("STEP 1: Processing all stock data (full period)...")
+    print("=" * 60)
 
+    stocks_data_full = {}
     for stock_code in sorted(stock_folders):
         print(f"Processing {stock_code}...")
         stock_data = process_stock_folder(stock_code, base_path)
         if stock_data:
-            stocks_data[stock_code] = stock_data
+            stocks_data_full[stock_code] = stock_data
             print(f"  Date range: {stock_data['date_start']} to {stock_data['date_end']}")
             print(f"  Total days: {len(stock_data['daily'])}")
-            print(f"  Recommendation: {stock_data['recommendation']['recommendation']}")
 
-    output = {
+    print(f"\n[OK] Processed {len(stocks_data_full)} stocks with full data")
+
+    # STEP 2: Generate JSON for each period
+    print("\n" + "=" * 60)
+    print("STEP 2: Generating period-specific JSON files...")
+    print("=" * 60)
+
+    for period in periods:
+        print(f"\n[*] Generating {period['label']} data ({period['days']} days)...")
+
+        stocks_data_period = {}
+
+        for stock_code, stock_data in stocks_data_full.items():
+            # Skip if not enough days for this period
+            if len(stock_data['daily']) < period['days']:
+                # Use available data
+                filtered_data = filter_data_by_period(stock_data, len(stock_data['daily']))
+            else:
+                filtered_data = filter_data_by_period(stock_data, period['days'])
+
+            if filtered_data:
+                stocks_data_period[stock_code] = filtered_data
+
+        # Generate JSON for this period
+        output = {
+            'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'period': period['label'],
+            'days': period['days'],
+            'stocks': stocks_data_period
+        }
+
+        filename = f"{period['name']}.json"
+        filepath = os.path.join(output_path, filename)
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(output, f, indent=2, ensure_ascii=False)
+
+        print(f"  [OK] Saved to {filename} ({len(stocks_data_period)} stocks)")
+
+    # STEP 3: Also save the default broker_data.json (alias to 6month)
+    print(f"\n[*] Generating broker_data.json (alias to 6month)...")
+
+    # Use 6month data as default
+    six_month_data = {
         'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        'stocks': stocks_data
+        'period': '6 Bulan (Default)',
+        'days': 180,
+        'stocks': {}
     }
 
-    output_path = r'C:\Users\Hendra.LAPTOP-M9SC6TF3\Saham\broker_data.json'
-    with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(output, f, indent=2, ensure_ascii=False)
+    for stock_code, stock_data in stocks_data_full.items():
+        filtered_data = filter_data_by_period(stock_data, 180)
+        if filtered_data:
+            six_month_data['stocks'][stock_code] = filtered_data
 
-    print(f"\nData saved to {output_path}")
-    print(f"Total stocks processed: {len(stocks_data)}")
+    default_filepath = os.path.join(output_path, 'broker_data.json')
+    with open(default_filepath, 'w', encoding='utf-8') as f:
+        json.dump(six_month_data, f, indent=2, ensure_ascii=False)
+
+    print(f"  [OK] Saved to broker_data.json ({len(six_month_data['stocks'])} stocks)")
+
+    print("\n" + "=" * 60)
+    print("[DONE] ALL DONE! Generated files:")
+    print("   - 1week.json   (1 Minggu / 7 hari)")
+    print("   - 1month.json  (1 Bulan / 30 hari)")
+    print("   - 3month.json  (3 Bulan / 90 hari)")
+    print("   - 6month.json  (6 Bulan / 180 hari)")
+    print("   - broker_data.json (default, 6 bulan)")
+    print("=" * 60)
 
 if __name__ == '__main__':
     main()

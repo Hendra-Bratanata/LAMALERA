@@ -1230,6 +1230,13 @@
 
         <!-- Stock Selector -->
         <div class="stock-selector" id="stockSelectorDiv" style="display: none;">
+            <label for="periodSelect">Periode:</label>
+            <select id="periodSelect" onchange="changePeriod()" style="min-width: 150px;">
+                <option value="6month">6 Bulan</option>
+                <option value="3month">3 Bulan</option>
+                <option value="1month">1 Bulan</option>
+                <option value="1week">1 Minggu</option>
+            </select>
             <label for="stockSelect">Pilih Saham:</label>
             <select id="stockSelect" onchange="loadStock()">
                 <option value="">-- Pilih Saham --</option>
@@ -1679,11 +1686,13 @@
         let priceFlowChart = null;
 
         // ===== DATA LOADING =====
-        async function loadData() {
+        async function loadData(period = '6month') {
+            const filename = period === '6month' ? 'broker_data.json' : `${period}.json`;
+
             try {
-                const response = await fetch('broker_data.json');
+                const response = await fetch(filename);
                 if (!response.ok) {
-                    throw new Error('File tidak ditemukan');
+                    throw new Error(`File ${filename} tidak ditemukan`);
                 }
                 allData = await response.json();
                 showError('');
@@ -1711,6 +1720,21 @@
                 };
                 reader.readAsText(file);
             }
+        }
+
+        function changePeriod() {
+            const period = document.getElementById('periodSelect').value;
+
+            // Show loading
+            document.getElementById('loadingMessage').style.display = 'block';
+            document.getElementById('loadingText').textContent = `Memuat data ${period}...`;
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('trappedWhaleAlertSection').style.display = 'none';
+            document.getElementById('recommendationsSection').style.display = 'none';
+            document.getElementById('stockSelectorDiv').style.display = 'none';
+
+            // Load new period data
+            loadData(period);
         }
 
         function showError(message) {
@@ -2195,7 +2219,10 @@
             const periodInfo = document.getElementById('periodInfo');
             const periodText = document.getElementById('periodText');
             periodInfo.style.display = 'block';
-            periodText.textContent = `${currentStock.date_start} s/d ${currentStock.date_end} (${currentStock.daily.length} hari trading)`;
+
+            const periodLabel = allData.period || '';
+            const daysLabel = allData.days ? ` (${allData.days} hari)` : '';
+            periodText.textContent = `${periodLabel}${daysLabel} | ${currentStock.date_start} s/d ${currentStock.date_end} (${currentStock.daily.length} hari trading)`;
 
             // Update chart stock titles
             document.getElementById('chartStockTitle1').textContent = `${stockCode} - Komposisi Trading`;
