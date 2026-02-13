@@ -119,6 +119,35 @@ def calculate_signals_and_recommendation(summary, daily):
     retail_bullish_reason = ''
     retail_bearish_reason = ''
 
+    # ===== TRAPPED WHALE DETECTION =====
+    is_whale_trapped = False
+    whale_trap_level = 'none'  # none, mild, severe
+
+    avg_whale_buy = s.get('whale_buyavg', 0)
+    avg_whale_sell = s.get('whale_sellavg', 0)
+
+    # Get last price (most recent whale buyavg as proxy)
+    last_price = None
+    for d in reversed(daily):
+        if d.get('whale_buyavg', 0) > 0:
+            last_price = d.get('whale_buyavg', 0)
+            break
+
+    if last_price and avg_whale_buy > 0:
+        price_diff_ratio = (avg_whale_buy - last_price) / avg_whale_buy
+        if price_diff_ratio > 0.20:  # More than 20% below = severely trapped
+            is_whale_trapped = True
+            whale_trap_level = 'severe'
+            score -= 3  # Heavy penalty for severely trapped whale
+            signals.append(f'⚠️ WHALE TERJEBAK BERAT (harga {price_diff_ratio*100:.0f}% di bawah rata-rata beli)')
+        elif price_diff_ratio > 0.10:  # More than 10% below = mildly trapped
+            is_whale_trapped = True
+            whale_trap_level = 'mild'
+            score -= 1  # Penalty for trapped whale
+            signals.append(f'⚠️ Whale terjebak (harga {price_diff_ratio*100:.0f}% di bawah rata-rata beli)')
+    else:
+        signals.append('Status whale: Normal')
+
     # Signal 1: Shark accumulation/distribution
     whale_net = s.get('whale_net', 0)
     if whale_net > 5:
@@ -206,17 +235,33 @@ def calculate_signals_and_recommendation(summary, daily):
     else:
         strength = 'weak'
 
-    # Final recommendation
-    if score >= 2.5:
-        recommendation = 'BUY'
-    elif score >= 1:
-        recommendation = 'BUY'
-    elif score <= -2.5:
-        recommendation = 'SELL'
-    elif score <= -1:
-        recommendation = 'SELL'
+    # Final recommendation (with trapped whale consideration)
+    if is_whale_trapped:
+        # When whale is trapped, be more conservative
+        if whale_trap_level == 'severe':
+            recommendation = 'HOLD'  # Don't buy when whale is severely underwater
+            signals.append('Rekomendasi: HOLD - Tunggu harga stabil di dekat area beli whale')
+        elif whale_trap_level == 'mild':
+            if score >= 2:
+                recommendation = 'BUY'
+                signals.append('Rekomendasi: BUY (spekulatif) - Whale terjebak ringan')
+            else:
+                recommendation = 'HOLD'
+                signals.append('Rekomendasi: HOLD - Whale terjebak, tunggu konfirmasi')
+        else:
+            recommendation = 'HOLD'
     else:
-        recommendation = 'HOLD'
+        # Normal recommendation logic
+        if score >= 2.5:
+            recommendation = 'BUY'
+        elif score >= 1:
+            recommendation = 'BUY'
+        elif score <= -2.5:
+            recommendation = 'SELL'
+        elif score <= -1:
+            recommendation = 'SELL'
+        else:
+            recommendation = 'HOLD'
 
     return {
         'score': round(score, 2),
@@ -227,7 +272,11 @@ def calculate_signals_and_recommendation(summary, daily):
         'retailBearishReason': retail_bearish_reason,
         'priceTrend': price_trend,
         'strength': strength,
-        'recommendation': recommendation
+        'recommendation': recommendation,
+        'isWhaleTrapped': is_whale_trapped,
+        'whaleTrapLevel': whale_trap_level,
+        'lastPrice': last_price if last_price else avg_whale_buy,
+        'avgWhaleBuy': avg_whale_buy
     }
 
 def calculate_volatility_and_trend(daily, summary):
@@ -325,6 +374,11 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
     volatility_factor = vt_data['volatilityFactor']
     trend_direction = vt_data['trendDirection']
 
+    # Get trapped whale status from signal_data
+    is_whale_trapped = signal_data.get('isWhaleTrapped', False)
+    whale_trap_level = signal_data.get('whaleTrapLevel', 'none')
+    last_price = signal_data.get('lastPrice', avg_shark_buy)
+
     # Get recent 5 days
     if len(daily) >= 5:
         recent_5_days = daily[-5:]
@@ -346,16 +400,26 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
 
     vwap_buy_price = weighted_buy_sum / total_buy_weight if total_buy_weight > 0 else avg_shark_buy
 
-    # Discount from average
-    discount_percent = max(0.02, min(0.06, volatility_factor * 0.6))
-    discount_buy_zone = vwap_buy_price * (1 - discount_percent)
+    # ===== CRITICAL FIX: Trapped Whale Detection =====
+    if is_whale_trapped:
+        # When whale is trapped, buy zone should be based on CURRENT price + premium
+        # NOT on whale's historical average (which is too high)
+        trapped_buy_premium = max(0.02, min(0.05, volatility_factor * 0.5))
+        buy_zone = last_price * (1 + trapped_buy_premium)
 
-    # Final buy zone
-    buy_zone = max(
-        discount_buy_zone,
-        lowest_recent_buy * 0.98,
-        min_shark_buy * 1.01
-    )
+        # Override stop loss for trapped scenario - closer to current price
+        structure_stop_loss = last_price * 0.95
+    else:
+        # Normal logic when whale is NOT trapped
+        discount_percent = max(0.02, min(0.06, volatility_factor * 0.6))
+        discount_buy_zone = vwap_buy_price * (1 - discount_percent)
+
+        buy_zone = max(
+            discount_buy_zone,
+            lowest_recent_buy * 0.98,
+            min_shark_buy * 1.01
+        )
+        structure_stop_loss = lowest_recent_buy * 0.97
 
     # Target price calculation
     base_target = avg_shark_sell
@@ -375,28 +439,44 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
     target_2_rr = buy_zone + (risk_amount * 2.5)
     target_3_rr = buy_zone + (risk_amount * 4)
 
-    # Final target
-    target_price = min(base_target, strong_resistance, target_2_rr)
+    # ===== TRAPPED WHALE: Conservative target =====
+    if is_whale_trapped:
+        # When whale is trapped, target should be realistic
+        # Aim for whale's breakeven (avg_buy) or slightly below avg_sell
+        trapped_target = min(avg_shark_buy, avg_shark_sell)
 
-    # Sell zone calculation
-    high_sell_activity_days = [
-        d for d in daily
-        if d.get('whale_sell', 0) > d.get('whale_buy', 0) * 1.5 and d.get('whale_sellavg', 0) > avg_shark_buy
-    ]
+        # But also consider buy_zone + reasonable profit (10-20%)
+        trapped_target_from_entry = buy_zone * 1.15
 
-    if high_sell_activity_days:
-        distribution_zone = sum(d.get('whale_sellavg', 0) for d in high_sell_activity_days) / len(high_sell_activity_days)
+        # Use the lower of the two - more conservative
+        target_price = min(trapped_target, trapped_target_from_entry)
+
+        # Sell zone should also be conservative when trapped
+        sell_zone = min(
+            avg_shark_buy * 1.03,  # Just 3% above whale avg (breakeven area)
+            avg_shark_sell,           # Or at whale sell average
+            buy_zone * 1.20          # Max 20% from entry
+        )
     else:
-        distribution_zone = avg_shark_sell
+        # Normal target calculation when whale is NOT trapped
+        target_price = min(base_target, strong_resistance, target_2_rr)
 
-    sell_zone = max(
-        distribution_zone,
-        avg_shark_sell * 1.02,
-        max_shark_buy * 1.05
-    )
+        # Sell zone calculation
+        high_sell_activity_days = [
+            d for d in daily
+            if d.get('whale_sell', 0) > d.get('whale_buy', 0) * 1.5 and d.get('whale_sellavg', 0) > avg_shark_buy
+        ]
 
-    # Stop loss calculation
-    structure_stop_loss = lowest_recent_buy * 0.97
+        if high_sell_activity_days:
+            distribution_zone = sum(d.get('whale_sellavg', 0) for d in high_sell_activity_days) / len(high_sell_activity_days)
+        else:
+            distribution_zone = avg_shark_sell
+
+        sell_zone = max(
+            distribution_zone,
+            avg_shark_sell * 1.02,
+            max_shark_buy * 1.05
+        )
 
     # Daily ranges for ATR-like calculation
     daily_ranges = []
@@ -453,7 +533,11 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
         'displayRR': round(min(rr_ratio, 10), 1),
         'potentialProfit': potential_profit,
         'potentialLoss': potential_loss,
-        'discountPercent': round(discount_percent, 4),
+        'discountPercent': round(discount_percent if not is_whale_trapped else trapped_buy_premium, 4),
+        'isWhaleTrapped': is_whale_trapped,
+        'whaleTrapLevel': whale_trap_level,
+        'lastPrice': round(last_price, 0),
+        'avgWhaleBuy': round(avg_shark_buy, 0),
         'buyTick': buy_tick,
         'targetTick': target_tick,
         'sellTick': sell_tick,

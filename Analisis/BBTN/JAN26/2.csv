@@ -1,5 +1,5 @@
 BBTNToBrokerCode	BBTN	Start	2026-01-02	End	2026-01-02	Mode	Value
-Investor	All	Board	RG
+Investor	All	Board	All Trade
 BY	BLot	BVal	BAvg	#	SL	SLot	SVal	SAvg
 CC	11,918	1,380,435,500	1158.28	1	CC	28,887	3,343,131,000	1157.31
 XL	9,905	1,147,523,000	1158.53	2	DR	5,892	680,633,000	1155.18

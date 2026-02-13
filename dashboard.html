@@ -264,6 +264,33 @@
             line-height: 1.6;
             color: #aaa;
         }
+        .trapped-whale-warning {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.1));
+            border: 2px solid rgba(231, 76, 60, 0.4);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .trapped-whale-warning h4 {
+            color: #e74c3c;
+            font-size: 1rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .trapped-whale-warning p {
+            color: #aaa;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+        .trapped-whale-warning .highlight {
+            color: #e74c3c;
+            font-weight: bold;
+        }
         .chart-section {
             margin-bottom: 30px;
         }
@@ -816,6 +843,9 @@
             .stock-rec-info-value { font-size: 0.9rem; }
             .stock-rec-reason { font-size: 0.75rem; padding-top: 8px; }
             .stock-rec-confidence { font-size: 0.6rem; padding: 2px 6px; }
+            .trapped-whale-warning { padding: 12px; }
+            .trapped-whale-warning h4 { font-size: 0.9rem; }
+            .trapped-whale-warning p { font-size: 0.75rem; }
         }
 
         /* Small Devices (landscape phones, 480px - 640px) */
@@ -1101,6 +1131,12 @@
                             <span class="price-label-sub">Cut Loss Point</span>
                             <span id="stopLoss" class="price-value">-</span>
                         </div>
+                    </div>
+                    <!-- Trapped Whale Warning -->
+                    <div id="trappedWhaleWarning" class="trapped-whale-warning" style="display: none;">
+                        <h4>⚠️ WHALE TERJEBAK</h4>
+                        <p>Whale sedang <span class="highlight">underwater</span> (harga sekarang jauh di bawah rata-rata beli).</p>
+                        <p style="margin-top: 8px; font-size: 0.8rem; color: #999;">Rekomendasi harga disesuaikan lebih konservatif dekat harga saat ini.</p>
                     </div>
                     <div class="price-info">
                         <p id="priceAdvice" class="price-advice-text">Memuat saran harga...</p>
@@ -1581,6 +1617,22 @@
             document.getElementById('targetPrice').innerHTML = `Rp ${pr.targetPrice}<sup style="font-size:0.7em; color:#888;">tick:${pr.targetTick}</sup>`;
             document.getElementById('sellZone').innerHTML = `Rp ${pr.sellZone}<sup style="font-size:0.7em; color:#888;">tick:${pr.sellTick}</sup>`;
             document.getElementById('stopLoss').innerHTML = `Rp ${pr.stopLoss}<sup style="font-size:0.7em; color:#888;">tick:${pr.stopTick}</sup>`;
+
+            // Trapped Whale Warning
+            const trappedWarning = document.getElementById('trappedWhaleWarning');
+            if (pr.isWhaleTrapped) {
+                trappedWarning.style.display = 'block';
+                const trapLevel = pr.whaleTrapLevel || 'unknown';
+                const levelText = trapLevel === 'severe' ? 'BERAT' : trapLevel === 'mild' ? 'RINGAN' : '';
+                const discount = ((pr.avgWhaleBuy - pr.lastPrice) / pr.avgWhaleBuy * 100).toFixed(0);
+
+                trappedWarning.querySelector('h4').innerHTML =
+                    `⚠️ WHALE TERJEBAK ${levelText}`;
+                trappedWarning.querySelector('p').innerHTML =
+                    `Whale beli rata-rata <span class="highlight">Rp ${pr.avgWhaleBuy}</span> tapi harga sekarang <span class="highlight">Rp ${pr.lastPrice}</span> (-${discount}%).`;
+            } else {
+                trappedWarning.style.display = 'none';
+            }
 
             // Update price advice
             const rec = currentStock.recommendation;

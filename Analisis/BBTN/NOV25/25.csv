@@ -1,5 +1,5 @@
-BBTNToBrokerCode	2	Start	2025-11-25	End	2025-11-25	Mode	Value
-Investor	All	Board	RG
+BBTNToBrokerCode	BBTN	Start	2025-11-25	End	2025-11-25	Mode	Value
+Investor	All	Board	All Trade
 BY	BLot	BVal	BAvg	#	SL	SLot	SVal	SAvg
 AZ	27,107	3,266,340,500	1204.98	1	CC	28,281	3,405,835,000	1204.28
 CP	24,475	2,945,732,000	1203.57	2	YP	18,413	2,216,817,000	1203.94
