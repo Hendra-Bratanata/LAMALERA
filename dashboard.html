@@ -396,6 +396,19 @@
             background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.08));
             border-color: rgba(231, 76, 60, 0.4);
         }
+        .trapped-alert-card.distributing {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.12), rgba(41, 128, 185, 0.06));
+            border-color: rgba(52, 152, 219, 0.35);
+        }
+        .trapped-alert-card.distributing .stock-code,
+        .trapped-alert-card.distributing .info-value,
+        .trapped-alert-card.distributing .info-arrow {
+            color: #3498db;
+        }
+        .trapped-alert-card.distributing .trap-badge {
+            background: rgba(52, 152, 219, 0.25);
+            color: #3498db;
+        }
         .trapped-alert-card.mild {
             background: linear-gradient(135deg, rgba(243, 156, 18, 0.12), rgba(230, 126, 34, 0.06));
             border-color: rgba(243, 156, 18, 0.35);
@@ -1192,16 +1205,16 @@
 
         <!-- Trapped Whale Alert Section -->
         <div id="trappedWhaleAlertSection" style="display: none; margin-bottom: 30px;">
-            <div style="background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.05)); border: 2px solid rgba(231, 76, 60, 0.3); border-radius: 12px; padding: 20px;">
+            <div style="background: linear-gradient(135deg, rgba(231, 76, 60, 0.08), rgba(52, 152, 219, 0.05)); border: 2px solid rgba(231, 76, 60, 0.25); border-radius: 12px; padding: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                    <h2 style="color: #e74c3c; font-size: 1.1rem; margin: 0;">⚠️ WHALE TERJEBAK - PERLU PERHATIAN</h2>
-                    <span id="trappedCount" class="badge" style="background: rgba(231, 76, 60, 0.3); color: #e74c3c; font-size: 0.8rem;">0 saham</span>
+                    <h2 style="color: #e74c3c; font-size: 1.1rem; margin: 0;">🐋 WHALE ALERT - PERLU PERHATIAN</h2>
+                    <span id="trappedCount" class="badge" style="background: rgba(231, 76, 60, 0.25); color: #e74c3c; font-size: 0.8rem;">0 saham</span>
                 </div>
                 <div id="trappedWhaleList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
                     <!-- Trapped whale cards will be injected here -->
                 </div>
                 <p style="margin-top: 15px; font-size: 0.8rem; color: #888; text-align: center;">
-                    💡 Klik card untuk melihat detail saham. Whale terjebak = harga jauh di bawah rata-rata beli whale.
+                    💡 Klik card untuk melihat detail saham. Whale terjebak = harga di bawah rata-rata beli. Whale distribusi = lepas barang ke ritel.
                 </p>
             </div>
         </div>
@@ -1860,10 +1873,43 @@
             const trappedDiscount = document.getElementById('trappedDiscount');
             const trappedLevel = document.getElementById('trappedLevel');
             const trappedMessage = document.getElementById('trappedMessage');
+            const cardIcon = trappedCard?.querySelector('.status-icon');
 
-            if (pr.isWhaleTrapped) {
+            // Check if distributing to retail
+            const isDistributing = pr.isDistributingToRetail || false;
+            const isTrapped = pr.isWhaleTrapped && !isDistributing;
+
+            if (isDistributing) {
+                // Whale is DISTRIBUTING to retail (not trapped)
+                trappedCard.style.display = 'block';
+                trappedCard.style.borderColor = 'rgba(52, 152, 219, 0.35)';
+
+                const discount = ((pr.avgWhaleBuy - pr.lastPrice) / pr.avgWhaleBuy * 100).toFixed(0);
+                const avgRetailBuy = pr.avgRetailBuy || pr.avgWhaleBuy;
+
+                trappedBadge.textContent = 'DISTRIBUSI KE RITEL';
+                trappedBadge.style.background = 'rgba(52, 152, 219, 0.3)';
+                trappedBadge.style.color = '#3498db';
+
+                if (cardIcon) cardIcon.textContent = '🔄';
+
+                trappedAvgBuy.textContent = `Rp ${pr.avgWhaleBuy}`;
+                trappedLastPrice.textContent = `Rp ${pr.lastPrice}`;
+                trappedDiscount.textContent = `-${discount}%`;
+                trappedDiscount.style.color = '#3498db';
+                trappedLevel.textContent = 'Distribusi';
+                trappedLevel.style.color = '#3498db';
+
+                trappedMessage.innerHTML = `<strong>🔄 Whale SEDANG DISTRIBUSI ke ritel!</strong><br>
+                    Ritel beli rata-rata <strong>Rp ${avgRetailBuy}</strong> (lebih tinggi dari whale avg Rp ${pr.avgWhaleBuy}).<br>
+                    Whale lepas barang ke ritel di harga lebih tinggi - <strong>bukan terjebak</strong>.`;
+
+                // Hide trapped warning banner
+                trappedWarning.style.display = 'none';
+            } else if (isTrapped) {
                 trappedWarning.style.display = 'block';
                 trappedCard.style.display = 'block';
+                trappedCard.style.borderColor = 'rgba(231, 76, 60, 0.35)';
 
                 const trapLevel = pr.whaleTrapLevel || 'unknown';
                 const levelText = trapLevel === 'severe' ? 'BERAT' : trapLevel === 'mild' ? 'RINGAN' : 'UNKNOWN';
@@ -1876,10 +1922,17 @@
 
                 // Update trapped whale card
                 trappedBadge.textContent = `TERJEBAK ${levelText}`;
+                trappedBadge.style.background = 'rgba(231, 76, 60, 0.3)';
+                trappedBadge.style.color = '#e74c3c';
+
+                if (cardIcon) cardIcon.textContent = '🐋';
+
                 trappedAvgBuy.textContent = `Rp ${pr.avgWhaleBuy}`;
                 trappedLastPrice.textContent = `Rp ${pr.lastPrice}`;
                 trappedDiscount.textContent = `-${discount}%`;
+                trappedDiscount.style.color = '#e74c3c';
                 trappedLevel.textContent = levelText;
+                trappedLevel.style.color = '#e74c3c';
 
                 if (trapLevel === 'severe') {
                     trappedMessage.innerHTML = `<strong>Whale terjebak berat (-${discount}% dari rata-rata beli).</strong> Harga masuk area beli tapi belum ada tanda reversal. Disarankan <strong>HOLD</strong> sampai ada sinyal konfirmasi.`;
@@ -1951,19 +2004,30 @@
             const section = document.getElementById('trappedWhaleAlertSection');
             const countBadge = document.getElementById('trappedCount');
 
-            // Get stocks with trapped whale
+            // Get stocks with trapped whale OR distributing to retail
             const trappedStocks = Object.entries(allData.stocks)
-                .filter(([code, stock]) => stock.priceRecommendation?.isWhaleTrapped)
+                .filter(([code, stock]) => {
+                    const pr = stock.priceRecommendation;
+                    const rec = stock.recommendation;
+                    // Show if whale is trapped OR distributing to retail
+                    return pr?.isWhaleTrapped || pr?.isDistributingToRetail || rec?.isDistributingToRetail;
+                })
                 .map(([code, stock]) => {
                     const pr = stock.priceRecommendation;
+                    const rec = stock.recommendation;
+                    const isDistributing = pr?.isDistributingToRetail || rec?.isDistributingToRetail;
+                    const isTrapped = pr?.isWhaleTrapped && !isDistributing;
+
                     const discount = ((pr.avgWhaleBuy - pr.lastPrice) / pr.avgWhaleBuy * 100).toFixed(0);
                     return {
                         code: code,
-                        trapLevel: pr.whaleTrapLevel,
-                        avgBuy: pr.avgWhaleBuy,
-                        lastPrice: pr.lastPrice,
+                        trapLevel: isDistributing ? 'DISTRIBUSI' : (pr.whaleTrapLevel || 'unknown'),
+                        avgBuy: pr.avgWhaleBuy || rec.avgWhaleBuy,
+                        lastPrice: pr.lastPrice || rec.lastPrice,
                         discount: discount,
-                        rec: stock.recommendation.recommendation
+                        rec: rec.recommendation,
+                        isDistributing: isDistributing,
+                        isTrapped: isTrapped
                     };
                 })
                 .sort((a, b) => parseFloat(b.discount) - parseFloat(a.discount));
@@ -1977,18 +2041,29 @@
             countBadge.textContent = `${trappedStocks.length} saham`;
 
             container.innerHTML = trappedStocks.map(stock => {
-                const isSevere = stock.trapLevel === 'severe';
-                const severityClass = isSevere ? 'severe' : 'mild';
+                let severityClass = 'mild';
+                let badgeText = stock.trapLevel;
+                let cardTitle = '⚠️';
+
+                if (stock.isDistributing) {
+                    severityClass = 'distributing';
+                    badgeText = 'DISTRIBUSI';
+                    cardTitle = '🔄';
+                } else if (stock.isTrapped) {
+                    severityClass = stock.trapLevel === 'severe' ? 'severe' : 'mild';
+                    badgeText = stock.trapLevel.toUpperCase();
+                    cardTitle = '⚠️';
+                }
 
                 return `
                     <div class="trapped-alert-card ${severityClass}" onclick="selectStockFromRec('${stock.code}')">
                         <div class="card-header">
-                            <span class="stock-code ${severityClass}">${stock.code}</span>
-                            <span class="trap-badge ${severityClass}">${stock.trapLevel}</span>
+                            <span class="stock-code ${severityClass}">${cardTitle} ${stock.code}</span>
+                            <span class="trap-badge ${severityClass}">${badgeText}</span>
                         </div>
                         <div class="card-body">
                             <div class="info-item">
-                                <span class="info-label">Avg Beli</span>
+                                <span class="info-label">Avg Beli Whale</span>
                                 <span class="info-value ${severityClass}">Rp ${stock.avgBuy}</span>
                             </div>
                             <div class="info-item">

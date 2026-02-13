@@ -122,9 +122,11 @@ def calculate_signals_and_recommendation(summary, daily):
     # ===== TRAPPED WHALE DETECTION =====
     is_whale_trapped = False
     whale_trap_level = 'none'  # none, mild, severe
+    is_distributing_to_retail = False  # NEW: Whale distributing to retail
 
     avg_whale_buy = s.get('whale_buyavg', 0)
     avg_whale_sell = s.get('whale_sellavg', 0)
+    avg_retail_buy = s.get('retail_buyavg', 0)
 
     # Get last price (most recent whale buyavg as proxy)
     last_price = None
@@ -133,7 +135,25 @@ def calculate_signals_and_recommendation(summary, daily):
             last_price = d.get('whale_buyavg', 0)
             break
 
-    if last_price and avg_whale_buy > 0:
+    # ===== NEW LOGIC: Check if whale is distributing to retail =====
+    # If retail owns MORE than whale AND retail buys at HIGHER price → whale is distributing
+    whale_net_lot = s.get('whale_net_lot', 0)
+    retail_net_lot = s.get('retail_net_lot', 0)
+
+    # Compare cumulative net lots (negative = selling/distributing)
+    # If retail net lot is positive (accumulating) while whale price is down
+    # And retail avg buy > whale avg buy → whale passing to retail at higher prices
+    if (retail_net_lot > 0) and (whale_net_lot < retail_net_lot):
+        # Retail has more ownership than whale
+        if avg_retail_buy > avg_whale_buy * 1.02:  # Retail buying 2%+ above whale avg
+            is_distributing_to_retail = True
+            # NOT trapped - whale is selling to retail!
+            is_whale_trapped = False
+            score -= 1
+            signals.append(f'🔄 Whale distribusi ke ritel (ritel beli avg Rp {avg_retail_buy:.0f} > whale avg Rp {avg_whale_buy:.0f})')
+
+    # Original trapped whale logic (only if NOT distributing to retail)
+    if not is_distributing_to_retail and last_price and avg_whale_buy > 0:
         price_diff_ratio = (avg_whale_buy - last_price) / avg_whale_buy
         if price_diff_ratio > 0.20:  # More than 20% below = severely trapped
             is_whale_trapped = True
@@ -145,7 +165,9 @@ def calculate_signals_and_recommendation(summary, daily):
             whale_trap_level = 'mild'
             score -= 1  # Penalty for trapped whale
             signals.append(f'⚠️ Whale terjebak (harga {price_diff_ratio*100:.0f}% di bawah rata-rata beli)')
-    else:
+        else:
+            signals.append('Status whale: Normal')
+    elif not is_distributing_to_retail:
         signals.append('Status whale: Normal')
 
     # Signal 1: Shark accumulation/distribution
@@ -235,7 +257,12 @@ def calculate_signals_and_recommendation(summary, daily):
     else:
         strength = 'weak'
 
-    # Final recommendation (with trapped whale consideration)
+    # ===== POSITION STATUS: Ada barang atau belum =====
+    whale_net_lot = s.get('whale_net_lot', 0)
+    has_barang = whale_net_lot > 0  # Whale punya barang (akumulasi)
+    no_barang = whale_net_lot < 0  # Whale sudah lepas barang (distribusi)
+
+    # Final recommendation (with trapped whale & position consideration)
     if is_whale_trapped:
         # When whale is trapped, be more conservative
         if whale_trap_level == 'severe':
@@ -275,8 +302,10 @@ def calculate_signals_and_recommendation(summary, daily):
         'recommendation': recommendation,
         'isWhaleTrapped': is_whale_trapped,
         'whaleTrapLevel': whale_trap_level,
+        'isDistributingToRetail': is_distributing_to_retail,
         'lastPrice': last_price if last_price else avg_whale_buy,
-        'avgWhaleBuy': avg_whale_buy
+        'avgWhaleBuy': avg_whale_buy,
+        'avgRetailBuy': avg_retail_buy
     }
 
 def calculate_volatility_and_trend(daily, summary):
@@ -377,6 +406,7 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
     # Get trapped whale status from signal_data
     is_whale_trapped = signal_data.get('isWhaleTrapped', False)
     whale_trap_level = signal_data.get('whaleTrapLevel', 'none')
+    is_distributing_to_retail = signal_data.get('isDistributingToRetail', False)
     last_price = signal_data.get('lastPrice', avg_shark_buy)
 
     # Get recent 5 days
@@ -401,7 +431,8 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
     vwap_buy_price = weighted_buy_sum / total_buy_weight if total_buy_weight > 0 else avg_shark_buy
 
     # ===== CRITICAL FIX: Trapped Whale Detection =====
-    if is_whale_trapped:
+    # Only apply trapped logic if NOT distributing to retail
+    if is_whale_trapped and not is_distributing_to_retail:
         # When whale is trapped, buy zone should be based on CURRENT price + premium
         # NOT on whale's historical average (which is too high)
         trapped_buy_premium = max(0.02, min(0.05, volatility_factor * 0.5))
@@ -409,6 +440,17 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
 
         # Override stop loss for trapped scenario - closer to current price
         structure_stop_loss = last_price * 0.95
+    elif is_distributing_to_retail:
+        # Whale is distributing to retail - use NORMAL logic (not trapped)
+        discount_percent = max(0.02, min(0.06, volatility_factor * 0.6))
+        discount_buy_zone = vwap_buy_price * (1 - discount_percent)
+
+        buy_zone = max(
+            discount_buy_zone,
+            lowest_recent_buy * 0.98,
+            min_shark_buy * 1.01
+        )
+        structure_stop_loss = lowest_recent_buy * 0.97
     else:
         # Normal logic when whale is NOT trapped
         discount_percent = max(0.02, min(0.06, volatility_factor * 0.6))
@@ -533,11 +575,13 @@ def calculate_price_recommendations(summary, daily, vt_data, signal_data):
         'displayRR': round(min(rr_ratio, 10), 1),
         'potentialProfit': potential_profit,
         'potentialLoss': potential_loss,
-        'discountPercent': round(discount_percent if not is_whale_trapped else trapped_buy_premium, 4),
-        'isWhaleTrapped': is_whale_trapped,
+        'discountPercent': round(discount_percent if not (is_whale_trapped and not is_distributing_to_retail) else trapped_buy_premium, 4),
+        'isWhaleTrapped': is_whale_trapped and not is_distributing_to_retail,
+        'isDistributingToRetail': is_distributing_to_retail,
         'whaleTrapLevel': whale_trap_level,
         'lastPrice': round(last_price, 0),
         'avgWhaleBuy': round(avg_shark_buy, 0),
+        'avgRetailBuy': round(signal_data.get('avgRetailBuy', 0), 0),
         'buyTick': buy_tick,
         'targetTick': target_tick,
         'sellTick': sell_tick,
