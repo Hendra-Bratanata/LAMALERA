@@ -1757,41 +1757,41 @@
             const totalBuy = s.total_buy;
             const totalSell = s.total_sell;
 
-            document.getElementById('whaleBuy').textContent = `Rp ${s.whale_buy} T`;
-            document.getElementById('whaleBuyAvgDisplay').textContent = `Avg: Rp ${s.whale_buyavg}`;
+            document.getElementById('whaleBuy').textContent = `Rp ${parseFloat(s.whale_buy).toFixed(2)} T`;
+            document.getElementById('whaleBuyAvgDisplay').textContent = `Avg: Rp ${parseFloat(s.whale_buyavg).toFixed(2)}`;
             document.getElementById('whaleBuyPct').textContent = `${((s.whale_buy / totalBuy) * 100).toFixed(0)}% dari total`;
 
-            document.getElementById('retailBuy').textContent = `Rp ${s.retail_buy} T`;
-            document.getElementById('retailBuyAvg').textContent = `Avg: Rp ${s.retail_buyavg}`;
+            document.getElementById('retailBuy').textContent = `Rp ${parseFloat(s.retail_buy).toFixed(2)} T`;
+            document.getElementById('retailBuyAvg').textContent = `Avg: Rp ${parseFloat(s.retail_buyavg).toFixed(2)}`;
             document.getElementById('retailBuyPct').textContent = `${((s.retail_buy / totalBuy) * 100).toFixed(0)}% dari total`;
 
-            document.getElementById('whaleSell').textContent = `Rp ${s.whale_sell} T`;
-            document.getElementById('whaleSellAvgDisplay').textContent = `Avg: Rp ${s.whale_sellavg}`;
+            document.getElementById('whaleSell').textContent = `Rp ${parseFloat(s.whale_sell).toFixed(2)} T`;
+            document.getElementById('whaleSellAvgDisplay').textContent = `Avg: Rp ${parseFloat(s.whale_sellavg).toFixed(2)}`;
             document.getElementById('whaleSellPct').textContent = `${((s.whale_sell / totalSell) * 100).toFixed(0)}% dari total`;
 
-            document.getElementById('retailSell').textContent = `Rp ${s.retail_sell} T`;
-            document.getElementById('retailSellAvg').textContent = `Avg: Rp ${s.retail_sellavg}`;
+            document.getElementById('retailSell').textContent = `Rp ${parseFloat(s.retail_sell).toFixed(2)} T`;
+            document.getElementById('retailSellAvg').textContent = `Avg: Rp ${parseFloat(s.retail_sellavg).toFixed(2)}`;
             document.getElementById('retailSellPct').textContent = `${((s.retail_sell / totalSell) * 100).toFixed(0)}% dari total`;
 
             // Whale BUY Avg Card
             const whaleBuyAvgEl = document.getElementById('whaleBuyAvg');
-            whaleBuyAvgEl.textContent = `Rp ${s.whale_buyavg}`;
+            whaleBuyAvgEl.textContent = `Rp ${parseFloat(s.whale_buyavg).toFixed(2)}`;
             const whaleBuyAvgLabelEl = document.getElementById('whaleBuyAvgLabel');
             whaleBuyAvgLabelEl.textContent = 'Rata-rata harga beli';
 
             // Whale SELL Avg Card
             const whaleSellAvgEl = document.getElementById('whaleSellAvg');
-            whaleSellAvgEl.textContent = `Rp ${s.whale_sellavg}`;
+            whaleSellAvgEl.textContent = `Rp ${parseFloat(s.whale_sellavg).toFixed(2)}`;
             const whaleSellAvgLabelEl = document.getElementById('whaleSellAvgLabel');
             whaleSellAvgLabelEl.textContent = 'Rata-rata harga jual';
 
             const whaleNetEl = document.getElementById('whaleNet');
-            whaleNetEl.textContent = `${s.whale_net >= 0 ? '+' : ''}Rp ${Math.abs(s.whale_net)} M`;
+            whaleNetEl.textContent = `${s.whale_net >= 0 ? '+' : ''}Rp ${parseFloat(Math.abs(s.whale_net)).toFixed(2)} M`;
             whaleNetEl.className = 'value ' + (s.whale_net >= 0 ? 'positive' : 'negative');
             document.getElementById('whaleNetStatus').textContent = s.whale_net >= 0 ? 'AKUMULASI/BELI' : 'DISTRIBUSI/JUAL';
 
             const fishermenNetEl = document.getElementById('retailNet');
-            fishermenNetEl.textContent = `${s.retail_net >= 0 ? '+' : ''}Rp ${Math.abs(s.retail_net)} M`;
+            fishermenNetEl.textContent = `${s.retail_net >= 0 ? '+' : ''}Rp ${parseFloat(Math.abs(s.retail_net)).toFixed(2)} M`;
             fishermenNetEl.className = 'value ' + (s.retail_net >= 0 ? 'positive' : 'negative');
             document.getElementById('retailNetStatus').textContent = s.retail_net >= 0 ? 'AKUMULASI/BELI' : 'DISTRIBUSI/JUAL';
 
@@ -1809,7 +1809,7 @@
             const lastWhaleBuyPrice = currentStock.volatilityTrend?.lastWhaleBuyPrice || 0;
             const whaleLastPriceEl = document.getElementById('whaleLastPrice');
             if (lastWhaleBuyPrice > 0) {
-                whaleLastPriceEl.textContent = `Rp ${lastWhaleBuyPrice}`;
+                whaleLastPriceEl.textContent = `Rp ${parseFloat(lastWhaleBuyPrice).toFixed(2)}`;
                 whaleLastPriceEl.className = 'value positive';
             } else {
                 whaleLastPriceEl.textContent = '-';
@@ -1917,8 +1917,8 @@
 
                 if (cardIcon) cardIcon.textContent = '🔄';
 
-                trappedAvgBuy.textContent = `Rp ${pr.avgWhaleBuy}`;
-                trappedLastPrice.textContent = `Rp ${pr.lastPrice}`;
+                trappedAvgBuy.textContent = `Rp ${parseFloat(pr.avgWhaleBuy).toFixed(2)}`;
+                trappedLastPrice.textContent = `Rp ${parseFloat(pr.lastPrice).toFixed(2)}`;
                 trappedDiscount.textContent = `-${discount}%`;
                 trappedDiscount.style.color = '#3498db';
                 trappedLevel.textContent = 'Distribusi';
@@ -1951,8 +1951,8 @@
 
                 if (cardIcon) cardIcon.textContent = '🐋';
 
-                trappedAvgBuy.textContent = `Rp ${pr.avgWhaleBuy}`;
-                trappedLastPrice.textContent = `Rp ${pr.lastPrice}`;
+                trappedAvgBuy.textContent = `Rp ${parseFloat(pr.avgWhaleBuy).toFixed(2)}`;
+                trappedLastPrice.textContent = `Rp ${parseFloat(pr.lastPrice).toFixed(2)}`;
                 trappedDiscount.textContent = `-${discount}%`;
                 trappedDiscount.style.color = '#e74c3c';
                 trappedLevel.textContent = levelText;
