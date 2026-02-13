@@ -291,6 +291,92 @@
             color: #e74c3c;
             font-weight: bold;
         }
+        .trapped-whale-card {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.12), rgba(192, 57, 43, 0.08));
+            border: 2px solid rgba(231, 76, 60, 0.35);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        .trapped-whale-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e74c3c, #c0392b, #e74c3c);
+            animation: pulse-border 2s ease-in-out infinite;
+        }
+        @keyframes pulse-border {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .trapped-whale-card .status-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(231, 76, 60, 0.2);
+        }
+        .trapped-whale-card .status-icon {
+            font-size: 1.8rem;
+        }
+        .trapped-whale-card .status-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .trapped-whale-card .status-badge {
+            background: rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .trapped-whale-card .status-body {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .trapped-whale-card .status-item {
+            background: rgba(255,255,255,0.03);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .trapped-whale-card .status-label {
+            font-size: 0.7rem;
+            color: #888;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .trapped-whale-card .status-value {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .trapped-whale-card .status-value.neutral {
+            color: #f39c12;
+        }
+        .trapped-whale-card .status-description {
+            grid-column: 1 / -1;
+            background: rgba(231, 76, 60, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #aaa;
+            line-height: 1.5;
+            border-left: 3px solid #e74c3c;
+        }
+        .trapped-whale-card .status-description strong {
+            color: #e74c3c;
+        }
         .chart-section {
             margin-bottom: 30px;
         }
@@ -844,8 +930,28 @@
             .stock-rec-reason { font-size: 0.75rem; padding-top: 8px; }
             .stock-rec-confidence { font-size: 0.6rem; padding: 2px 6px; }
             .trapped-whale-warning { padding: 12px; }
+            .trapped-whale-card { padding: 12px; }
+            .trapped-whale-card .status-body { grid-template-columns: 1fr; gap: 8px; }
+            .trapped-whale-card .status-icon { font-size: 1.3rem; }
+            .trapped-whale-card .status-title { font-size: 0.9rem; }
+            .trapped-whale-card .status-badge { font-size: 0.6rem; }
+            .trapped-whale-card .status-item { padding: 8px; }
+            .trapped-whale-card .status-label { font-size: 0.6rem; }
+            .trapped-whale-card .status-value { font-size: 0.85rem; }
+            .trapped-whale-card .status-description { font-size: 0.7rem; }
+        }
             .trapped-whale-warning h4 { font-size: 0.9rem; }
             .trapped-whale-warning p { font-size: 0.75rem; }
+            .trapped-whale-card { padding: 15px; margin-bottom: 15px; }
+            .trapped-whale-card .status-header { flex-wrap: wrap; }
+            .trapped-whale-card .status-icon { font-size: 1.5rem; }
+            .trapped-whale-card .status-title { font-size: 1rem; }
+            .trapped-whale-card .status-badge { font-size: 0.65rem; }
+            .trapped-whale-card .status-body { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .trapped-whale-card .status-item { padding: 10px; }
+            .trapped-whale-card .status-label { font-size: 0.65rem; }
+            .trapped-whale-card .status-value { font-size: 0.9rem; }
+            .trapped-whale-card .status-description { font-size: 0.75rem; padding: 10px; }
         }
 
         /* Small Devices (landscape phones, 480px - 640px) */
@@ -1140,6 +1246,35 @@
                     </div>
                     <div class="price-info">
                         <p id="priceAdvice" class="price-advice-text">Memuat saran harga...</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Trapped Whale Status Card -->
+            <div id="trappedWhaleCard" class="trapped-whale-card" style="display: none;">
+                <div class="status-header">
+                    <span class="status-icon">🐋</span>
+                    <span class="status-title">STATUS WHALE</span>
+                    <span id="trappedBadge" class="status-badge">TERJEBAK</span>
+                </div>
+                <div class="status-body">
+                    <div class="status-item">
+                        <span class="status-label">Rata-rata Beli Whale</span>
+                        <span id="trappedAvgBuy" class="status-value">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Harga Terakhir</span>
+                        <span id="trappedLastPrice" class="status-value neutral">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Diskon Harga</span>
+                        <span id="trappedDiscount" class="status-value">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Level Trapped</span>
+                        <span id="trappedLevel" class="status-value">-</span>
+                    </div>
+                    <div class="status-description">
+                        <strong>⚠️ PERINGATAN:</strong> <span id="trappedMessage">Whale sedang underwater. Rekomendasi harga disesuaikan lebih konservatif.</span>
                     </div>
                 </div>
             </div>
@@ -1620,18 +1755,42 @@
 
             // Trapped Whale Warning
             const trappedWarning = document.getElementById('trappedWhaleWarning');
+            const trappedCard = document.getElementById('trappedWhaleCard');
+            const trappedBadge = document.getElementById('trappedBadge');
+            const trappedAvgBuy = document.getElementById('trappedAvgBuy');
+            const trappedLastPrice = document.getElementById('trappedLastPrice');
+            const trappedDiscount = document.getElementById('trappedDiscount');
+            const trappedLevel = document.getElementById('trappedLevel');
+            const trappedMessage = document.getElementById('trappedMessage');
+
             if (pr.isWhaleTrapped) {
                 trappedWarning.style.display = 'block';
+                trappedCard.style.display = 'block';
+
                 const trapLevel = pr.whaleTrapLevel || 'unknown';
-                const levelText = trapLevel === 'severe' ? 'BERAT' : trapLevel === 'mild' ? 'RINGAN' : '';
+                const levelText = trapLevel === 'severe' ? 'BERAT' : trapLevel === 'mild' ? 'RINGAN' : 'UNKNOWN';
                 const discount = ((pr.avgWhaleBuy - pr.lastPrice) / pr.avgWhaleBuy * 100).toFixed(0);
 
                 trappedWarning.querySelector('h4').innerHTML =
                     `⚠️ WHALE TERJEBAK ${levelText}`;
                 trappedWarning.querySelector('p').innerHTML =
                     `Whale beli rata-rata <span class="highlight">Rp ${pr.avgWhaleBuy}</span> tapi harga sekarang <span class="highlight">Rp ${pr.lastPrice}</span> (-${discount}%).`;
+
+                // Update trapped whale card
+                trappedBadge.textContent = `TERJEBAK ${levelText}`;
+                trappedAvgBuy.textContent = `Rp ${pr.avgWhaleBuy}`;
+                trappedLastPrice.textContent = `Rp ${pr.lastPrice}`;
+                trappedDiscount.textContent = `-${discount}%`;
+                trappedLevel.textContent = levelText;
+
+                if (trapLevel === 'severe') {
+                    trappedMessage.innerHTML = `<strong>Whale terjebak berat (-${discount}% dari rata-rata beli).</strong> Harga masuk area beli tapi belum ada tanda reversal. Disarankan <strong>HOLD</strong> sampai ada sinyal konfirmasi.`;
+                } else {
+                    trappedMessage.innerHTML = `<strong>Whale terjebak ringan (-${discount}%).</strong> Potensi oversold, tapi tunggu sinyal konfirmasi sebelum entry.`;
+                }
             } else {
                 trappedWarning.style.display = 'none';
+                trappedCard.style.display = 'none';
             }
 
             // Update price advice
